@@ -9,7 +9,10 @@
     "pnpm": ">=12.21.0 <13"
   },
   "scripts": {
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
