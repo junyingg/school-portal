@@ -9,11 +9,9 @@ import {
   TEACHER_EMAIL_TAKEN_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
 } from "@school-portal/contract"
-import {
-  hasZodFastifySchemaValidationErrors,
-  type ZodFastifySchemaValidationError,
-} from "fastify-type-provider-zod"
+import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod"
 import { TEACHERS_EMAIL_LOWER_KEY } from "../db/constraintNames.ts"
+import { toValidationMessage } from "./validationMessage.ts"
 
 export interface ErrorReply {
   readonly statusCode: number
@@ -28,8 +26,6 @@ const HTTP_UNSUPPORTED_MEDIA_TYPE = 415
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const BAD_REQUEST_REASON = "Bad Request"
 const UNIQUE_VIOLATION_CODE = "23505"
-const WHOLE_BODY_PATH = "/"
-const VALIDATION_MESSAGE_SEPARATOR = "; "
 
 const INTERNAL_ERROR_REPLY: ErrorReply = {
   statusCode: HTTP_INTERNAL_SERVER_ERROR,
@@ -86,20 +82,6 @@ function reasonPhraseFor(statusCode: number): string {
   return STATUS_CODES[statusCode] ?? BAD_REQUEST_REASON
 }
 
-function validationFailureReply(
-  validation: readonly ZodFastifySchemaValidationError[],
-): ErrorReply {
-  const isWholeBodyInvalid = validation.some((issue) => issue.instancePath === WHOLE_BODY_PATH)
-  if (isWholeBodyInvalid) {
-    return clientFault(HTTP_BAD_REQUEST, NOT_AN_OBJECT_MESSAGE)
-  }
-  const messages = validation.flatMap((issue) =>
-    issue.message === undefined ? [] : [issue.message],
-  )
-  const distinctMessages = [...new Set(messages)]
-  return clientFault(HTTP_BAD_REQUEST, distinctMessages.join(VALIDATION_MESSAGE_SEPARATOR))
-}
-
 function conflictMessageFor(constraint: string | undefined): string {
   return constraint === TEACHERS_EMAIL_LOWER_KEY
     ? TEACHER_EMAIL_TAKEN_MESSAGE
@@ -112,7 +94,7 @@ export function mapErrorToReply(error: unknown): ErrorReply {
   }
 
   if (hasZodFastifySchemaValidationErrors(error)) {
-    return validationFailureReply(error.validation)
+    return clientFault(HTTP_BAD_REQUEST, toValidationMessage(error.validation))
   }
 
   const code = errorCodeOf(error)
