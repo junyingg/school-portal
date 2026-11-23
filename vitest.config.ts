@@ -77,6 +77,7 @@ export default defineConfig({
           name: "integration:api",
           include: ["apps/api/test/integration/**/*.test.ts"],
           environment: "node",
+          globalSetup: ["apps/api/test/integration/globalSetup.ts"],
           fileParallelism: false,
           hookTimeout: CONTAINER_STARTUP_TIMEOUT_MS,
           testTimeout: INTEGRATION_TEST_TIMEOUT_MS,

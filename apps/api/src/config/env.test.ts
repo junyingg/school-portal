@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { loadConfig } from "./env.ts"
+import { loadConfig, loadMigrationConfig } from "./env.ts"
 
 const DATABASE_URL = "postgres://school_portal_app:s3cret-password@localhost:5432/school_portal"
 
@@ -12,13 +12,17 @@ const ENV_WITHOUT_DATABASE_URL = {
 
 const MINIMAL_ENV = { ...ENV_WITHOUT_DATABASE_URL, DATABASE_URL }
 
-function configErrorMessage(env: Record<string, string>): string {
+function thrownMessage(action: () => unknown): string {
   try {
-    loadConfig(env)
+    action()
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }
-  throw new Error("expected loadConfig to throw")
+  throw new Error("expected the action to throw")
+}
+
+function configErrorMessage(env: Record<string, string>): string {
+  return thrownMessage(() => loadConfig(env))
 }
 
 describe("loadConfig", () => {
@@ -78,5 +82,29 @@ describe("loadConfig", () => {
     expect(loadConfig({ ...MINIMAL_ENV, CORS_ALLOWED_ORIGINS: value }).corsAllowedOrigins).toEqual(
       expected,
     )
+  })
+})
+
+describe("loadMigrationConfig", () => {
+  const MIGRATION_DATABASE_URL =
+    "postgres://school_portal_migrator:m1grator-secret@localhost:5432/school_portal"
+
+  it("reads MIGRATION_DATABASE_URL", () => {
+    expect(loadMigrationConfig({ MIGRATION_DATABASE_URL })).toStrictEqual({
+      migrationDatabaseUrl: MIGRATION_DATABASE_URL,
+    })
+  })
+
+  it("names a missing MIGRATION_DATABASE_URL", () => {
+    expect(thrownMessage(() => loadMigrationConfig({}))).toContain("MIGRATION_DATABASE_URL")
+  })
+
+  it("names a non-URL MIGRATION_DATABASE_URL without echoing its value", () => {
+    const message = thrownMessage(() =>
+      loadMigrationConfig({ MIGRATION_DATABASE_URL: "m1grator-secret" }),
+    )
+
+    expect(message).toContain("MIGRATION_DATABASE_URL")
+    expect(message).not.toContain("m1grator-secret")
   })
 })

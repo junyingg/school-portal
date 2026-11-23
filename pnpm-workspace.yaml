@@ -6,3 +6,6 @@ trustPolicy: no-downgrade
 engineStrict: true
 allowBuilds:
   esbuild: true
+  ssh2: false
+  cpu-features: false
+  protobufjs: false
