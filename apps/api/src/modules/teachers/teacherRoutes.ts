@@ -1,4 +1,8 @@
-import { createTeacherRequestSchema, teacherSchema } from "@school-portal/contract"
+import {
+  createTeacherRequestSchema,
+  teacherListResponseSchema,
+  teacherSchema,
+} from "@school-portal/contract"
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod"
 import type { TeacherHandlers } from "./teacherHandlers.ts"
 
@@ -10,6 +14,11 @@ export function createTeacherRoutes(handlers: TeacherHandlers): FastifyPluginCal
       TEACHERS_PATH,
       { schema: { body: createTeacherRequestSchema, response: { 201: teacherSchema } } },
       handlers.registerTeacher,
+    )
+    app.get(
+      TEACHERS_PATH,
+      { schema: { response: { 200: teacherListResponseSchema } } },
+      handlers.listTeachers,
     )
     done()
   }

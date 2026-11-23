@@ -12,6 +12,7 @@ export interface TeacherRecord {
 
 export interface TeacherRepository {
   insert(teacher: CreateTeacherRequest): Promise<TeacherRecord>
+  listInInsertionOrder(): Promise<TeacherRecord[]>
 }
 
 const TEACHER_COLUMNS = [
@@ -35,6 +36,10 @@ export function createTeacherRepository(db: Kysely<Database>): TeacherRepository
         })
         .returning(TEACHER_COLUMNS)
         .executeTakeFirstOrThrow()
+    },
+
+    listInInsertionOrder() {
+      return db.selectFrom("teachers").select(TEACHER_COLUMNS).orderBy("id").execute()
     },
   }
 }

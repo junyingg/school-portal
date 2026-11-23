@@ -1,4 +1,4 @@
-import type { CreateTeacherRequest } from "@school-portal/contract"
+import type { CreateTeacherRequest, TeacherListResponse } from "@school-portal/contract"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import type { TeacherService } from "./teacherService.ts"
 
@@ -9,6 +9,7 @@ export interface TeacherHandlers {
     request: FastifyRequest<{ Body: CreateTeacherRequest }>,
     reply: FastifyReply,
   ) => Promise<void>
+  readonly listTeachers: () => Promise<TeacherListResponse>
 }
 
 export function createTeacherHandlers(teacherService: TeacherService): TeacherHandlers {
@@ -16,6 +17,11 @@ export function createTeacherHandlers(teacherService: TeacherService): TeacherHa
     async registerTeacher(request, reply) {
       const teacher = await teacherService.registerTeacher(request.body)
       await reply.status(HTTP_CREATED).send(teacher)
+    },
+
+    async listTeachers() {
+      const teachers = await teacherService.listTeachers()
+      return { data: teachers }
     },
   }
 }

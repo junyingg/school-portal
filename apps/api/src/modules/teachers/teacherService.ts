@@ -4,6 +4,7 @@ import type { TeacherRepository } from "./teacherRepository.ts"
 
 export interface TeacherService {
   registerTeacher(request: CreateTeacherRequest): Promise<Teacher>
+  listTeachers(): Promise<Teacher[]>
 }
 
 export interface TeacherServiceDependencies {
@@ -17,6 +18,11 @@ export function createTeacherService({
     async registerTeacher(request) {
       const record = await teacherRepository.insert(request)
       return toTeacher(record)
+    },
+
+    async listTeachers() {
+      const records = await teacherRepository.listInInsertionOrder()
+      return records.map(toTeacher)
     },
   }
 }
