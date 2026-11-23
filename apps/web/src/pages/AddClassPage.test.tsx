@@ -17,9 +17,17 @@ import { renderWithProviders } from "../test/renderWithProviders.tsx"
 const CHEN_EMAIL = designTeachers[5]?.email ?? ""
 const GENERIC_MESSAGE = "Something went wrong. Please try again."
 
+function formTeacherField(): HTMLElement {
+  const field = screen.getByRole("combobox", { name: "Form Teacher" }).closest(".ant-form-item")
+  if (!(field instanceof HTMLElement)) {
+    throw new Error("Form Teacher field not found")
+  }
+  return field
+}
+
 function expectClass1BKept() {
   expect(screen.getByRole("textbox", { name: "Class Name" })).toHaveValue("Class 1B")
-  expect(screen.getByText("Chen Bing Bing")).toBeInTheDocument()
+  expect(within(formTeacherField()).getByTitle("Chen Bing Bing")).toBeInTheDocument()
 }
 
 function renderAddClassPage() {
