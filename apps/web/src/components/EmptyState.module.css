@@ -1,0 +1,13 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 320px;
+}
+
+.message {
+  margin: 0;
+  font-weight: 700;
+}
