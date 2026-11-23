@@ -16,7 +16,10 @@ export async function buildTestApp(): Promise<TestApp> {
     connectionString: inject("appDatabaseUrl"),
     maxConnections: TEST_POOL_SIZE,
   })
-  const app = await buildApp({ config: { logLevel: "silent" }, services: createServices(db) })
+  const app = await buildApp({
+    config: { logLevel: "silent", corsAllowedOrigins: [] },
+    services: createServices(db),
+  })
   return {
     app,
     close: async () => {

@@ -33,8 +33,11 @@ function fakeServices(overrides: Partial<AppServices> = {}): AppServices {
   return { teacherService: fakeTeacherService(), classService: fakeClassService(), ...overrides }
 }
 
-async function startApp(services: AppServices = fakeServices()): Promise<FastifyInstance> {
-  const app = await buildApp({ config: { logLevel: "silent" }, services })
+async function startApp(
+  services: AppServices = fakeServices(),
+  corsAllowedOrigins: readonly string[] = [],
+): Promise<FastifyInstance> {
+  const app = await buildApp({ config: { logLevel: "silent", corsAllowedOrigins }, services })
   onTestFinished(() => app.close())
   return app
 }
@@ -192,5 +195,58 @@ describe("POST /api/classes", () => {
 
     expect(response.statusCode).toBe(400)
     expect(response.json()).toStrictEqual({ error: "No teacher found with email x@y.co" })
+  })
+})
+
+const ALLOWED_ORIGIN = "https://portal.example"
+
+describe("security headers", () => {
+  it("are set on every response, including a 404", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({ method: "GET", url: "/nope" })
+
+    expect(response.headers["x-content-type-options"]).toBe("nosniff")
+    expect(response.headers["content-security-policy"]).toContain("default-src 'none'")
+    expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'")
+    expect(response.headers["x-powered-by"]).toBeUndefined()
+  })
+})
+
+describe("CORS", () => {
+  it("sends no CORS headers when no origins are configured", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/healthz",
+      headers: { origin: ALLOWED_ORIGIN },
+    })
+
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined()
+  })
+
+  it("allows a configured origin", async () => {
+    const app = await startApp(fakeServices(), [ALLOWED_ORIGIN])
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/healthz",
+      headers: { origin: ALLOWED_ORIGIN },
+    })
+
+    expect(response.headers["access-control-allow-origin"]).toBe(ALLOWED_ORIGIN)
+  })
+
+  it("refuses an origin that is not configured", async () => {
+    const app = await startApp(fakeServices(), [ALLOWED_ORIGIN])
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/healthz",
+      headers: { origin: "https://evil.example" },
+    })
+
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined()
   })
 })
