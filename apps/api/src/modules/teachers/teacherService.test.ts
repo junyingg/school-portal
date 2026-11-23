@@ -11,6 +11,7 @@ function fakeRepository(overrides: Partial<TeacherRepository> = {}): TeacherRepo
   return {
     insert: () => Promise.reject(new Error("insert not expected")),
     listInInsertionOrder: () => Promise.resolve([]),
+    findByEmail: () => Promise.resolve(undefined),
     ...overrides,
   }
 }
