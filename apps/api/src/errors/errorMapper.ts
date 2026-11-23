@@ -2,17 +2,14 @@ import { STATUS_CODES } from "node:http"
 import {
   BODY_TOO_LARGE_MESSAGE,
   CONTENT_LENGTH_MISMATCH_MESSAGE,
-  FORM_TEACHER_TAKEN_MESSAGE,
   INTERNAL_ERROR_MESSAGE,
   INVALID_JSON_MESSAGE,
   NOT_AN_OBJECT_MESSAGE,
-  RESOURCE_EXISTS_MESSAGE,
-  TEACHER_EMAIL_TAKEN_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
 } from "@school-portal/contract"
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod"
-import { CLASSES_FORM_TEACHER_ID_KEY, TEACHERS_EMAIL_LOWER_KEY } from "../db/constraintNames.ts"
 import { UnknownTeacherEmailError } from "./domainErrors.ts"
+import { conflictMessageFor, isUniqueViolation } from "./postgresErrors.ts"
 import { toValidationMessage } from "./validationMessage.ts"
 
 export interface ErrorReply {
@@ -27,7 +24,6 @@ const HTTP_PAYLOAD_TOO_LARGE = 413
 const HTTP_UNSUPPORTED_MEDIA_TYPE = 415
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const BAD_REQUEST_REASON = "Bad Request"
-const UNIQUE_VIOLATION_CODE = "23505"
 
 const INTERNAL_ERROR_REPLY: ErrorReply = {
   statusCode: HTTP_INTERNAL_SERVER_ERROR,
@@ -64,13 +60,6 @@ function errorCodeOf(error: object): string | undefined {
   return undefined
 }
 
-function constraintOf(error: object): string | undefined {
-  if ("constraint" in error && typeof error.constraint === "string") {
-    return error.constraint
-  }
-  return undefined
-}
-
 function clientErrorStatusOf(error: object): number | undefined {
   if (!("statusCode" in error) || typeof error.statusCode !== "number") {
     return undefined
@@ -82,16 +71,6 @@ function clientErrorStatusOf(error: object): number | undefined {
 
 function reasonPhraseFor(statusCode: number): string {
   return STATUS_CODES[statusCode] ?? BAD_REQUEST_REASON
-}
-
-function conflictMessageFor(constraint: string | undefined): string {
-  if (constraint === TEACHERS_EMAIL_LOWER_KEY) {
-    return TEACHER_EMAIL_TAKEN_MESSAGE
-  }
-  if (constraint === CLASSES_FORM_TEACHER_ID_KEY) {
-    return FORM_TEACHER_TAKEN_MESSAGE
-  }
-  return RESOURCE_EXISTS_MESSAGE
 }
 
 export function mapErrorToReply(error: unknown): ErrorReply {
@@ -113,8 +92,8 @@ export function mapErrorToReply(error: unknown): ErrorReply {
     return bodyErrorReply
   }
 
-  if (code === UNIQUE_VIOLATION_CODE) {
-    return clientFault(HTTP_CONFLICT, conflictMessageFor(constraintOf(error)))
+  if (isUniqueViolation(error)) {
+    return clientFault(HTTP_CONFLICT, conflictMessageFor(error.constraint))
   }
 
   const clientErrorStatus = clientErrorStatusOf(error)
