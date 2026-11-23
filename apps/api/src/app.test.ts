@@ -33,11 +33,22 @@ function fakeServices(overrides: Partial<AppServices> = {}): AppServices {
   return { teacherService: fakeTeacherService(), classService: fakeClassService(), ...overrides }
 }
 
-async function startApp(
-  services: AppServices = fakeServices(),
-  corsAllowedOrigins: readonly string[] = [],
-): Promise<FastifyInstance> {
-  const app = await buildApp({ config: { logLevel: "silent", corsAllowedOrigins }, services })
+interface StartOptions {
+  readonly services?: AppServices
+  readonly corsAllowedOrigins?: readonly string[]
+  readonly checkReadiness?: () => Promise<void>
+}
+
+async function startApp({
+  services = fakeServices(),
+  corsAllowedOrigins = [],
+  checkReadiness = () => Promise.resolve(),
+}: StartOptions = {}): Promise<FastifyInstance> {
+  const app = await buildApp({
+    config: { logLevel: "silent", corsAllowedOrigins },
+    services,
+    checkReadiness,
+  })
   onTestFinished(() => app.close())
   return app
 }
@@ -146,9 +157,9 @@ describe("POST body handling", () => {
 describe("POST /api/teachers", () => {
   it("passes the trimmed request to the service without unknown fields", async () => {
     const registerTeacher = vi.fn<TeacherService["registerTeacher"]>().mockResolvedValue(MARY)
-    const app = await startApp(
-      fakeServices({ teacherService: fakeTeacherService(registerTeacher) }),
-    )
+    const app = await startApp({
+      services: fakeServices({ teacherService: fakeTeacherService(registerTeacher) }),
+    })
 
     const response = await postTeacher(app, { ...MARY, name: " Mary ", id: 9 })
 
@@ -158,7 +169,7 @@ describe("POST /api/teachers", () => {
 
   it("hides a service failure behind a 500", async () => {
     const failingService = fakeTeacherService(() => Promise.reject(new Error(LEAKY_ERROR_MESSAGE)))
-    const app = await startApp(fakeServices({ teacherService: failingService }))
+    const app = await startApp({ services: fakeServices({ teacherService: failingService }) })
 
     const response = await postTeacher(app, MARY)
 
@@ -171,7 +182,7 @@ describe("POST /api/teachers", () => {
     const brokenService = fakeTeacherService(() =>
       Promise.resolve(incompleteTeacher as unknown as Teacher),
     )
-    const app = await startApp(fakeServices({ teacherService: brokenService }))
+    const app = await startApp({ services: fakeServices({ teacherService: brokenService }) })
 
     const response = await postTeacher(app, MARY)
 
@@ -185,7 +196,7 @@ describe("POST /api/classes", () => {
     const classService = fakeClassService(() =>
       Promise.reject(new UnknownTeacherEmailError("x@y.co")),
     )
-    const app = await startApp(fakeServices({ classService }))
+    const app = await startApp({ services: fakeServices({ classService }) })
 
     const response = await app.inject({
       method: "POST",
@@ -227,7 +238,7 @@ describe("CORS", () => {
   })
 
   it("allows a configured origin", async () => {
-    const app = await startApp(fakeServices(), [ALLOWED_ORIGIN])
+    const app = await startApp({ corsAllowedOrigins: [ALLOWED_ORIGIN] })
 
     const response = await app.inject({
       method: "GET",
@@ -239,7 +250,7 @@ describe("CORS", () => {
   })
 
   it("refuses an origin that is not configured", async () => {
-    const app = await startApp(fakeServices(), [ALLOWED_ORIGIN])
+    const app = await startApp({ corsAllowedOrigins: [ALLOWED_ORIGIN] })
 
     const response = await app.inject({
       method: "GET",
@@ -248,5 +259,26 @@ describe("CORS", () => {
     })
 
     expect(response.headers["access-control-allow-origin"]).toBeUndefined()
+  })
+})
+
+describe("GET /readyz", () => {
+  it("replies 200 when the readiness check passes", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({ method: "GET", url: "/readyz" })
+
+    expect(response.statusCode).toBe(200)
+  })
+
+  it("replies 503 with a JSON error when the readiness check fails", async () => {
+    const app = await startApp({
+      checkReadiness: () => Promise.reject(new Error("connection refused")),
+    })
+
+    const response = await app.inject({ method: "GET", url: "/readyz" })
+
+    expect(response.statusCode).toBe(503)
+    expect(response.json()).toStrictEqual({ error: "Service unavailable" })
   })
 })
