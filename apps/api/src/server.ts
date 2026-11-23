@@ -6,7 +6,7 @@ const LISTEN_PORT = 3000
 const LOG_LEVEL = "info"
 const SHUTDOWN_GRACE_PERIOD_MS = 10_000
 
-const app = buildApp({ config: { logLevel: LOG_LEVEL } })
+const app = await buildApp({ config: { logLevel: LOG_LEVEL } })
 
 closeWithGrace({ delay: SHUTDOWN_GRACE_PERIOD_MS }, async ({ err }) => {
   if (err !== undefined) {
