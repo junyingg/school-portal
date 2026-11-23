@@ -2,11 +2,17 @@ import { SPEC_TEACHERS } from "@school-portal/contract"
 import type { LightMyRequestResponse } from "fastify"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { buildTestApp, type TestApp } from "./support/buildTestApp.ts"
-import { JSON_CONTENT_TYPE, TEACHERS_PATH, getJson, postRaw } from "./support/requests.ts"
+import {
+  CLASSES_PATH,
+  JSON_CONTENT_TYPE,
+  TEACHERS_PATH,
+  getJson,
+  postRaw,
+} from "./support/requests.ts"
 import { resetDatabase } from "./support/resetDatabase.ts"
 
 const [MARY] = SPEC_TEACHERS
-const POST_PATHS = [TEACHERS_PATH]
+const POST_PATHS = [TEACHERS_PATH, CLASSES_PATH]
 const SIXTEEN_KIB = 16 * 1024
 const EMPTY_NAME_OBJECT_LENGTH = '{"name":""}'.length
 

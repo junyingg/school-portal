@@ -1,7 +1,13 @@
-import { SPEC_TEACHERS, type CreateTeacherRequest } from "@school-portal/contract"
+import {
+  SPEC_CREATE_CLASS_REQUEST,
+  SPEC_TEACHERS,
+  type CreateClassRequest,
+  type CreateTeacherRequest,
+} from "@school-portal/contract"
 import type { FastifyInstance, LightMyRequestResponse } from "fastify"
 
 export const TEACHERS_PATH = "/api/teachers"
+export const CLASSES_PATH = "/api/classes"
 export const JSON_CONTENT_TYPE = "application/json; charset=utf-8"
 
 const [MARY] = SPEC_TEACHERS
@@ -36,4 +42,10 @@ export function aTeacherRequest(
   overrides: Partial<Record<keyof CreateTeacherRequest, unknown>> = {},
 ): Record<string, unknown> {
   return { ...MARY, ...overrides }
+}
+
+export function aClassRequest(
+  overrides: Partial<Record<keyof CreateClassRequest, unknown>> = {},
+): Record<string, unknown> {
+  return { ...SPEC_CREATE_CLASS_REQUEST, ...overrides }
 }

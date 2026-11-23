@@ -1,11 +1,19 @@
-import { SPEC_TEACHERS, type Teacher } from "@school-portal/contract"
+import {
+  SPEC_CLASSES,
+  SPEC_CREATE_CLASS_REQUEST,
+  SPEC_TEACHERS,
+  type Teacher,
+} from "@school-portal/contract"
 import type { FastifyInstance, FastifyPluginCallback } from "fastify"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { buildApp } from "./app.ts"
 import type { AppServices } from "./composition.ts"
+import { UnknownTeacherEmailError } from "./errors/domainErrors.ts"
+import type { ClassService } from "./modules/classes/classService.ts"
 import type { TeacherService } from "./modules/teachers/teacherService.ts"
 
 const [MARY] = SPEC_TEACHERS
+const [CLASS_1A] = SPEC_CLASSES
 
 const LEAKY_ERROR_MESSAGE = "select * from teachers where password = 'hunter2'"
 
@@ -15,8 +23,14 @@ function fakeTeacherService(
   return { registerTeacher, listTeachers: () => Promise.resolve([MARY]) }
 }
 
+function fakeClassService(
+  addClass: ClassService["addClass"] = () => Promise.resolve(CLASS_1A),
+): ClassService {
+  return { addClass }
+}
+
 function fakeServices(overrides: Partial<AppServices> = {}): AppServices {
-  return { teacherService: fakeTeacherService(), ...overrides }
+  return { teacherService: fakeTeacherService(), classService: fakeClassService(), ...overrides }
 }
 
 async function startApp(services: AppServices = fakeServices()): Promise<FastifyInstance> {
@@ -160,5 +174,23 @@ describe("POST /api/teachers", () => {
 
     expect(response.statusCode).toBe(500)
     expect(response.json()).toStrictEqual({ error: "Internal server error" })
+  })
+})
+
+describe("POST /api/classes", () => {
+  it("replies 400 naming an unknown teacher email", async () => {
+    const classService = fakeClassService(() =>
+      Promise.reject(new UnknownTeacherEmailError("x@y.co")),
+    )
+    const app = await startApp(fakeServices({ classService }))
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/classes",
+      payload: { ...SPEC_CREATE_CLASS_REQUEST, teacherEmail: "x@y.co" },
+    })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toStrictEqual({ error: "No teacher found with email x@y.co" })
   })
 })

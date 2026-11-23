@@ -2,6 +2,7 @@ import { createTeacherRequestSchema } from "@school-portal/contract"
 import { errorCodes } from "fastify"
 import { validatorCompiler } from "fastify-type-provider-zod"
 import { describe, expect, it } from "vitest"
+import { UnknownTeacherEmailError } from "./domainErrors.ts"
 import { mapErrorToReply, type ErrorReply } from "./errorMapper.ts"
 
 interface MappingCase {
@@ -85,6 +86,16 @@ const CASES: MappingCase[] = [
     description: "a duplicate teacher email",
     input: uniqueViolation("teachers_email_lower_key"),
     expected: clientFault(409, "A teacher with this email already exists"),
+  },
+  {
+    description: "an unknown teacher email",
+    input: new UnknownTeacherEmailError("x@y.co"),
+    expected: clientFault(400, "No teacher found with email x@y.co"),
+  },
+  {
+    description: "a form teacher who already has a class",
+    input: uniqueViolation("classes_form_teacher_id_key"),
+    expected: clientFault(409, "Teacher is already the form teacher of another class"),
   },
   {
     description: "an unknown unique constraint",
