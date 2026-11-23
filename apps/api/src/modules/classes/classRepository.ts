@@ -7,8 +7,15 @@ export interface NewClass {
   readonly formTeacherId: number
 }
 
+export interface ClassWithFormTeacherRecord {
+  readonly level: string
+  readonly name: string
+  readonly formTeacherName: string
+}
+
 export interface ClassRepository {
   insert(schoolClass: NewClass): Promise<void>
+  listInInsertionOrder(): Promise<ClassWithFormTeacherRecord[]>
 }
 
 export function createClassRepository(db: Kysely<Database>): ClassRepository {
@@ -21,6 +28,19 @@ export function createClassRepository(db: Kysely<Database>): ClassRepository {
           name: schoolClass.name,
           form_teacher_id: schoolClass.formTeacherId,
         })
+        .execute()
+    },
+
+    listInInsertionOrder() {
+      return db
+        .selectFrom("classes")
+        .innerJoin("teachers", "teachers.id", "classes.form_teacher_id")
+        .select([
+          "classes.level as level",
+          "classes.name as name",
+          "teachers.name as formTeacherName",
+        ])
+        .orderBy("classes.id")
         .execute()
     },
   }

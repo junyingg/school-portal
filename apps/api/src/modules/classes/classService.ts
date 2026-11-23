@@ -1,10 +1,12 @@
 import type { CreateClassRequest, SchoolClass } from "@school-portal/contract"
 import { UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
 import type { TeacherRepository } from "../teachers/teacherRepository.ts"
+import { toSchoolClass } from "./classMapper.ts"
 import type { ClassRepository } from "./classRepository.ts"
 
 export interface ClassService {
   addClass(request: CreateClassRequest): Promise<SchoolClass>
+  listClasses(): Promise<SchoolClass[]>
 }
 
 export interface ClassServiceDependencies {
@@ -33,6 +35,11 @@ export function createClassService({
         name: request.name,
         formTeacher: { name: formTeacher.name },
       }
+    },
+
+    async listClasses() {
+      const records = await classRepository.listInInsertionOrder()
+      return records.map(toSchoolClass)
     },
   }
 }

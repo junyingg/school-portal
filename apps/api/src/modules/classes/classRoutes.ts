@@ -1,4 +1,8 @@
-import { createClassRequestSchema, schoolClassSchema } from "@school-portal/contract"
+import {
+  classListResponseSchema,
+  createClassRequestSchema,
+  schoolClassSchema,
+} from "@school-portal/contract"
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod"
 import type { ClassHandlers } from "./classHandlers.ts"
 
@@ -10,6 +14,11 @@ export function createClassRoutes(handlers: ClassHandlers): FastifyPluginCallbac
       CLASSES_PATH,
       { schema: { body: createClassRequestSchema, response: { 201: schoolClassSchema } } },
       handlers.addClass,
+    )
+    app.get(
+      CLASSES_PATH,
+      { schema: { response: { 200: classListResponseSchema } } },
+      handlers.listClasses,
     )
     done()
   }
