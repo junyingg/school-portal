@@ -4,5 +4,5 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["*.config.ts", "scripts/**/*.ts"]
+  "include": ["*.config.ts", "scripts/**/*.ts", "apps/web/vite.config.ts"]
 }

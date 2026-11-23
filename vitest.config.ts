@@ -1,16 +1,18 @@
+import react from "@vitejs/plugin-react"
 import { defaultClientConditions, defaultServerConditions } from "vite"
 import { defineConfig } from "vitest/config"
 
+const SOURCE_CONDITION = "@school-portal/source"
 const CONTAINER_STARTUP_TIMEOUT_MS = 120_000
 const INTEGRATION_TEST_TIMEOUT_MS = 15_000
 
 export default defineConfig({
   resolve: {
-    conditions: ["source", ...defaultClientConditions],
+    conditions: [SOURCE_CONDITION, ...defaultClientConditions],
   },
   ssr: {
     resolve: {
-      conditions: ["source", ...defaultServerConditions],
+      conditions: [SOURCE_CONDITION, ...defaultServerConditions],
     },
   },
   test: {
@@ -65,10 +67,12 @@ export default defineConfig({
       },
       {
         extends: true,
+        plugins: [react()],
         test: {
           name: "component:web",
           include: ["apps/web/src/**/*.test.tsx"],
           environment: "jsdom",
+          setupFiles: ["apps/web/src/test/setup.ts"],
         },
       },
       {

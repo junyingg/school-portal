@@ -6,7 +6,7 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "@school-portal/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
