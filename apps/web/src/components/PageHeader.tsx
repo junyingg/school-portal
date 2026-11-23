@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { useFocusHeadingOnNavigate } from "../hooks/useFocusHeadingOnNavigate.ts"
 import styles from "./PageHeader.module.css"
 
 interface PageHeaderProps {
@@ -7,9 +8,12 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, action }: PageHeaderProps) {
+  const headingRef = useFocusHeadingOnNavigate()
   return (
     <div className={styles["header"]}>
-      <h1 className={styles["title"]}>{title}</h1>
+      <h1 ref={headingRef} tabIndex={-1} className={styles["title"]}>
+        {title}
+      </h1>
       {action}
     </div>
   )

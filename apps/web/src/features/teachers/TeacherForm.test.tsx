@@ -1,9 +1,16 @@
 import { SUBJECTS } from "@school-portal/contract"
-import { screen, within } from "@testing-library/react"
+import { fireEvent, screen, within } from "@testing-library/react"
 import { userEvent, type UserEvent } from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { renderWithProviders } from "../../test/renderWithProviders.tsx"
 import { TeacherForm, type TeacherFormProps } from "./TeacherForm.tsx"
+
+const LEGACY_KEY_CODES = { ArrowDown: 40, Enter: 13 } as const
+
+function pressKeyWithLegacyCode(element: Element, key: keyof typeof LEGACY_KEY_CODES) {
+  const keyCode = LEGACY_KEY_CODES[key]
+  fireEvent.keyDown(element, { key, code: key, keyCode, which: keyCode })
+}
 
 function renderForm(overrides: Partial<TeacherFormProps> = {}) {
   const props: TeacherFormProps = {
@@ -45,21 +52,28 @@ describe("TeacherForm", () => {
     )
   })
 
-  it("offers the nine subjects in documentation order and selects with the keyboard", async () => {
+  it("offers the nine subjects in documentation order", async () => {
     const user = userEvent.setup()
-    const props = renderForm()
+    renderForm()
 
     await user.click(screen.getByRole("combobox", { name: "Subject" }))
     const listbox = await screen.findByRole("listbox")
+
     expect(
       within(listbox)
         .getAllByRole("option")
         .map((option) => option.textContent),
     ).toEqual([...SUBJECTS])
+  })
 
-    await user.keyboard("{Escape}")
-    screen.getByRole("combobox", { name: "Subject" }).focus()
-    await user.keyboard("{ArrowDown}{Enter}")
+  it("selects a subject with ArrowDown and Enter", async () => {
+    const user = userEvent.setup()
+    const props = renderForm()
+
+    const subject = screen.getByRole("combobox", { name: "Subject" })
+    subject.focus()
+    pressKeyWithLegacyCode(subject, "ArrowDown")
+    pressKeyWithLegacyCode(subject, "Enter")
     await user.type(screen.getByRole("textbox", { name: "Name" }), "Mary")
     await user.type(screen.getByRole("textbox", { name: "Email Address" }), "mary@example.com")
     await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "61234567")
