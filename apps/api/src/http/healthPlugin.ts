@@ -1,8 +1,27 @@
+import { SERVICE_UNAVAILABLE_MESSAGE } from "@school-portal/contract"
 import type { FastifyPluginCallback } from "fastify"
 
-const HEALTH_PATH = "/healthz"
+export interface HealthOptions {
+  readonly checkReadiness: () => Promise<void>
+}
 
-export const healthPlugin: FastifyPluginCallback = (app, _options, done) => {
-  app.get(HEALTH_PATH, () => ({ status: "ok" }))
+const LIVENESS_PATH = "/healthz"
+const READINESS_PATH = "/readyz"
+const HTTP_SERVICE_UNAVAILABLE = 503
+const HEALTHY = { status: "ok" }
+
+export const healthPlugin: FastifyPluginCallback<HealthOptions> = (app, options, done) => {
+  app.get(LIVENESS_PATH, () => HEALTHY)
+
+  app.get(READINESS_PATH, async (request, reply) => {
+    try {
+      await options.checkReadiness()
+    } catch (error) {
+      request.log.warn({ err: error }, "Readiness check failed")
+      return reply.status(HTTP_SERVICE_UNAVAILABLE).send({ error: SERVICE_UNAVAILABLE_MESSAGE })
+    }
+    return HEALTHY
+  })
+
   done()
 }

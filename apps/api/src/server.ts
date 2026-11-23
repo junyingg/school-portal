@@ -3,6 +3,7 @@ import { buildApp } from "./app.ts"
 import { createServices } from "./composition.ts"
 import { loadConfig } from "./config/env.ts"
 import { createDatabase } from "./db/database.ts"
+import { createReadinessProbe } from "./db/readiness.ts"
 
 const SHUTDOWN_GRACE_PERIOD_MS = 10_000
 
@@ -11,12 +12,18 @@ const db = createDatabase({
   connectionString: config.databaseUrl,
   maxConnections: config.dbPoolMax,
 })
-const app = await buildApp({ config, services: createServices(db) })
+const readiness = createReadinessProbe(db)
+const app = await buildApp({
+  config,
+  services: createServices(db),
+  checkReadiness: readiness.check,
+})
 
 closeWithGrace({ delay: SHUTDOWN_GRACE_PERIOD_MS }, async ({ err }) => {
   if (err !== undefined) {
     app.log.error({ err }, "Shutting down after an uncaught error")
   }
+  readiness.markDraining()
   await app.close()
   await db.destroy()
 })

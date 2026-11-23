@@ -15,6 +15,7 @@ import { createTeacherRoutes } from "./modules/teachers/teacherRoutes.ts"
 export interface AppDependencies {
   readonly config: HttpConfig
   readonly services: AppServices
+  readonly checkReadiness: () => Promise<void>
 }
 
 const REQUEST_ID_HEADER = "x-request-id"
@@ -34,7 +35,7 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
   await app.register(securityPlugin, {
     corsAllowedOrigins: dependencies.config.corsAllowedOrigins,
   })
-  await app.register(healthPlugin)
+  await app.register(healthPlugin, { checkReadiness: dependencies.checkReadiness })
   await app.register(
     createTeacherRoutes(createTeacherHandlers(dependencies.services.teacherService)),
   )
