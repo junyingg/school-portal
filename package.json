@@ -10,6 +10,7 @@
   },
   "scripts": {
     "env:init": "node scripts/initEnv.ts",
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" dev",
     "build": "pnpm -r build",
     "typecheck": "tsc -b",
     "lint": "eslint .",
