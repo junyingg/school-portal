@@ -1,0 +1,1 @@
+export const REQUEST_BODY_LIMIT_BYTES = 16 * 1024
