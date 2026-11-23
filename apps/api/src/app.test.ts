@@ -26,7 +26,7 @@ function fakeTeacherService(
 function fakeClassService(
   addClass: ClassService["addClass"] = () => Promise.resolve(CLASS_1A),
 ): ClassService {
-  return { addClass }
+  return { addClass, listClasses: () => Promise.resolve([CLASS_1A]) }
 }
 
 function fakeServices(overrides: Partial<AppServices> = {}): AppServices {

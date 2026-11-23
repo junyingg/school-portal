@@ -7,6 +7,7 @@ import {
   TEACHERS_PATH,
   aClassRequest,
   aTeacherRequest,
+  getJson,
   postJson,
 } from "./support/requests.ts"
 import { resetDatabase } from "./support/resetDatabase.ts"
@@ -60,6 +61,8 @@ describe("ten parallel classes for one form teacher", () => {
     expect(new Set(conflictMessages(responses))).toEqual(
       new Set(["Teacher is already the form teacher of another class"]),
     )
+    const classes = await getJson(testApp.app, CLASSES_PATH)
+    expect(classes.json<{ data: unknown[] }>().data).toHaveLength(1)
   })
 })
 

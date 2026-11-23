@@ -1,8 +1,8 @@
-import { SPEC_CREATE_CLASS_REQUEST, SPEC_TEACHERS } from "@school-portal/contract"
+import { SPEC_CLASSES, SPEC_CREATE_CLASS_REQUEST, SPEC_TEACHERS } from "@school-portal/contract"
 import { describe, expect, it, vi } from "vitest"
 import { UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
 import type { TeacherRecord, TeacherRepository } from "../teachers/teacherRepository.ts"
-import type { ClassRepository } from "./classRepository.ts"
+import type { ClassRepository, ClassWithFormTeacherRecord } from "./classRepository.ts"
 import { createClassService } from "./classService.ts"
 
 const [MARY] = SPEC_TEACHERS
@@ -20,9 +20,14 @@ function fakeTeacherRepository(findByEmail: TeacherRepository["findByEmail"]): T
   }
 }
 
-function fakeClassRepository(insert: ClassRepository["insert"]): ClassRepository {
-  return { insert }
+function fakeClassRepository(
+  insert: ClassRepository["insert"],
+  listInInsertionOrder: ClassRepository["listInInsertionOrder"] = () => Promise.resolve([]),
+): ClassRepository {
+  return { insert, listInInsertionOrder }
 }
+
+const [CLASS_1A, CLASS_2B] = SPEC_CLASSES
 
 describe("addClass", () => {
   it("inserts the class for the teacher found by email and returns only the teacher name", async () => {
@@ -68,5 +73,23 @@ describe("addClass", () => {
     })
 
     await expect(service.addClass(SPEC_CREATE_CLASS_REQUEST)).rejects.toBe(uniqueViolation)
+  })
+})
+
+describe("listClasses", () => {
+  it("keeps the repository order", async () => {
+    const records: ClassWithFormTeacherRecord[] = [
+      { level: "Primary 2", name: "Class 2B", formTeacherName: "Ken" },
+      { level: "Primary 1", name: "Class 1A", formTeacherName: "Mary" },
+    ]
+    const service = createClassService({
+      teacherRepository: fakeTeacherRepository(() => Promise.resolve(undefined)),
+      classRepository: fakeClassRepository(
+        () => Promise.resolve(),
+        () => Promise.resolve(records),
+      ),
+    })
+
+    await expect(service.listClasses()).resolves.toStrictEqual([CLASS_2B, CLASS_1A])
   })
 })
