@@ -24,6 +24,10 @@ export interface AppConfig {
 
 export type HttpConfig = Pick<AppConfig, "logLevel">
 
+export interface MigrationConfig {
+  readonly migrationDatabaseUrl: string
+}
+
 function splitCommaSeparatedList(value: string): string[] {
   return value
     .split(",")
@@ -41,19 +45,31 @@ const environmentSchema = z.object({
   CORS_ALLOWED_ORIGINS: z.string().default("").transform(splitCommaSeparatedList),
 })
 
+const migrationEnvironmentSchema = z.object({
+  MIGRATION_DATABASE_URL: z.url({ protocol: POSTGRES_PROTOCOL }),
+})
+
 function describeIssue(issue: z.core.$ZodIssue): string {
   const key = issue.path.map(String).join(".")
   return `${key}: ${issue.message}`
 }
 
-export function loadConfig(env: Readonly<Record<string, string | undefined>>): AppConfig {
-  const result = environmentSchema.safeParse(env)
+type Environment = Readonly<Record<string, string | undefined>>
+
+function parseEnvironment<Schema extends z.ZodType>(
+  schema: Schema,
+  env: Environment,
+): z.output<Schema> {
+  const result = schema.safeParse(env)
   if (!result.success) {
     const problems = result.error.issues.map(describeIssue).join("; ")
     throw new Error(`Invalid environment: ${problems}`)
   }
+  return result.data
+}
 
-  const parsed = result.data
+export function loadConfig(env: Environment): AppConfig {
+  const parsed = parseEnvironment(environmentSchema, env)
   return {
     nodeEnv: parsed.NODE_ENV,
     host: parsed.API_HOST,
@@ -63,4 +79,9 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): A
     dbPoolMax: parsed.DB_POOL_MAX,
     corsAllowedOrigins: parsed.CORS_ALLOWED_ORIGINS,
   }
+}
+
+export function loadMigrationConfig(env: Environment): MigrationConfig {
+  const parsed = parseEnvironment(migrationEnvironmentSchema, env)
+  return { migrationDatabaseUrl: parsed.MIGRATION_DATABASE_URL }
 }
