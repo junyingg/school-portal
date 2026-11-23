@@ -13,6 +13,7 @@ export interface TeacherRecord {
 export interface TeacherRepository {
   insert(teacher: CreateTeacherRequest): Promise<TeacherRecord>
   listInInsertionOrder(): Promise<TeacherRecord[]>
+  findByEmail(email: string): Promise<TeacherRecord | undefined>
 }
 
 const TEACHER_COLUMNS = [
@@ -40,6 +41,16 @@ export function createTeacherRepository(db: Kysely<Database>): TeacherRepository
 
     listInInsertionOrder() {
       return db.selectFrom("teachers").select(TEACHER_COLUMNS).orderBy("id").execute()
+    },
+
+    findByEmail(email) {
+      return db
+        .selectFrom("teachers")
+        .select(TEACHER_COLUMNS)
+        .where((eb) =>
+          eb(eb.fn<string>("lower", ["email"]), "=", eb.fn<string>("lower", [eb.val(email)])),
+        )
+        .executeTakeFirst()
     },
   }
 }
