@@ -12,6 +12,7 @@ interface ControlledSelectProps<Values extends FieldValues, Output> {
   readonly serverMessage?: string | undefined
   readonly isLoading?: boolean
   readonly emptyContent?: ReactNode
+  readonly footnote?: ReactNode
   readonly onOpenChange?: (isOpen: boolean) => void
 }
 
@@ -24,6 +25,7 @@ export function ControlledSelect<Values extends FieldValues, Output>({
   serverMessage,
   isLoading = false,
   emptyContent,
+  footnote,
   onOpenChange,
 }: ControlledSelectProps<Values, Output>) {
   const { controlId, messageId } = useFieldIds()
@@ -34,7 +36,13 @@ export function ControlledSelect<Values extends FieldValues, Output>({
       render={({ field, fieldState }) => {
         const message = fieldState.error?.message ?? serverMessage
         return (
-          <FormField label={label} controlId={controlId} messageId={messageId} error={message}>
+          <FormField
+            label={label}
+            controlId={controlId}
+            messageId={messageId}
+            error={message}
+            footnote={footnote}
+          >
             <SelectInput
               id={controlId}
               ref={field.ref}

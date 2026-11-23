@@ -6,14 +6,11 @@ import {
   SUBJECTS,
 } from "@school-portal/contract"
 import { z } from "zod"
+import { isUnselected } from "../selectionRules.ts"
 import { TEACHER_FIELD_MESSAGES as MESSAGES } from "./teacherFieldMessages.ts"
 
 export const WORK_CONTACT_NUMBER_PATTERN = /^6\d{7}$/
 const ALL_WHITESPACE = /\s+/g
-
-function isUnselected(input: unknown): boolean {
-  return input === undefined || input === ""
-}
 
 function stripWhitespace(value: string): string {
   return value.replace(ALL_WHITESPACE, "")

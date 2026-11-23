@@ -7,10 +7,18 @@ interface FormFieldProps {
   readonly controlId: string
   readonly messageId: string
   readonly error: string | undefined
+  readonly footnote?: ReactNode
   readonly children: ReactNode
 }
 
-export function FormField({ label, controlId, messageId, error, children }: FormFieldProps) {
+export function FormField({
+  label,
+  controlId,
+  messageId,
+  error,
+  footnote,
+  children,
+}: FormFieldProps) {
   const hasError = error !== undefined
   return (
     <div className={styles["field"]}>
@@ -19,6 +27,7 @@ export function FormField({ label, controlId, messageId, error, children }: Form
         htmlFor={controlId}
         validateStatus={hasError ? "error" : ""}
         help={hasError ? <span id={messageId}>{error}</span> : null}
+        extra={footnote}
       >
         {children}
       </Form.Item>
