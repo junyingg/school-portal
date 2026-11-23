@@ -23,6 +23,7 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
     logger: { level: dependencies.config.logLevel },
     requestIdHeader: REQUEST_ID_HEADER,
     bodyLimit: REQUEST_BODY_LIMIT_BYTES,
+    routerOptions: { ignoreTrailingSlash: true },
   })
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)

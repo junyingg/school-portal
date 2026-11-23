@@ -12,3 +12,4 @@ export const FORM_TEACHER_TAKEN_MESSAGE = "Teacher is already the form teacher o
 export function unknownTeacherEmailMessage(email: string): string {
   return `No teacher found with email ${email}`
 }
+export const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed"
