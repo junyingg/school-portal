@@ -6,6 +6,7 @@ import { REQUEST_BODY_LIMIT_BYTES } from "./config/limits.ts"
 import { errorHandlerPlugin } from "./errors/errorHandlerPlugin.ts"
 import { healthPlugin } from "./http/healthPlugin.ts"
 import { jsonOnlyPlugin } from "./http/jsonOnlyPlugin.ts"
+import { securityPlugin } from "./http/securityPlugin.ts"
 import { createClassHandlers } from "./modules/classes/classHandlers.ts"
 import { createClassRoutes } from "./modules/classes/classRoutes.ts"
 import { createTeacherHandlers } from "./modules/teachers/teacherHandlers.ts"
@@ -30,6 +31,9 @@ export async function buildApp(dependencies: AppDependencies): Promise<FastifyIn
 
   await app.register(jsonOnlyPlugin)
   await app.register(errorHandlerPlugin)
+  await app.register(securityPlugin, {
+    corsAllowedOrigins: dependencies.config.corsAllowedOrigins,
+  })
   await app.register(healthPlugin)
   await app.register(
     createTeacherRoutes(createTeacherHandlers(dependencies.services.teacherService)),

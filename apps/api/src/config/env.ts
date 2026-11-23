@@ -22,7 +22,7 @@ export interface AppConfig {
   readonly corsAllowedOrigins: readonly string[]
 }
 
-export type HttpConfig = Pick<AppConfig, "logLevel">
+export type HttpConfig = Pick<AppConfig, "logLevel" | "corsAllowedOrigins">
 
 export interface MigrationConfig {
   readonly migrationDatabaseUrl: string

@@ -11,6 +11,8 @@
     "db:migrate": "tsx --conditions=source --env-file-if-exists=../../.env src/db/migrate.ts"
   },
   "dependencies": {
+    "@fastify/cors": "11.4.3",
+    "@fastify/helmet": "13.2.0",
     "@school-portal/contract": "workspace:*",
     "close-with-grace": "2.5.0",
     "fastify": "5.12.8",
