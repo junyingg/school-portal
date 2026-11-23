@@ -1,4 +1,5 @@
 import {
+  CONTACT_NUMBER_PATTERN,
   CONTROL_CHARACTER_PATTERN,
   EMAIL_MAX_LENGTH,
   NAME_MAX_LENGTH,
@@ -9,7 +10,6 @@ import { z } from "zod"
 import { isUnselected } from "../selectionRules.ts"
 import { TEACHER_FIELD_MESSAGES as MESSAGES } from "./teacherFieldMessages.ts"
 
-export const WORK_CONTACT_NUMBER_PATTERN = /^6\d{7}$/
 const ALL_WHITESPACE = /\s+/g
 
 function stripWhitespace(value: string): string {
@@ -40,7 +40,7 @@ export const teacherFormSchema = z.object({
       z
         .string()
         .min(1, { error: MESSAGES.contactNumberRequired, abort: true })
-        .regex(WORK_CONTACT_NUMBER_PATTERN, MESSAGES.contactNumberInvalid),
+        .regex(CONTACT_NUMBER_PATTERN, MESSAGES.contactNumberInvalid),
     ),
 })
 

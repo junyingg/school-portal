@@ -1,9 +1,11 @@
 import { Table } from "antd"
 import type { ReactNode } from "react"
+import styles from "./DataTable.module.css"
 
 export interface DataColumn<Row> {
   readonly key: string
   readonly title: string
+  readonly width?: number | undefined
   readonly render: (row: Row, position: number) => ReactNode
 }
 
@@ -27,16 +29,19 @@ export function DataTable<Row>({ label, columns, rows }: DataTableProps<Row>) {
   const tableColumns = columns.map((column) => ({
     key: column.key,
     title: column.title,
+    ...(column.width === undefined ? {} : { width: column.width }),
     render: (_value: unknown, entry: PositionedRow<Row>) =>
       column.render(entry.row, entry.position),
   }))
 
   return (
-    <Table<PositionedRow<Row>>
-      aria-label={label}
-      columns={tableColumns}
-      dataSource={positionRows(rows)}
-      pagination={false}
-    />
+    <div className={styles["scroll"]} role="region" aria-label={`${label} table`} tabIndex={0}>
+      <Table<PositionedRow<Row>>
+        aria-label={label}
+        columns={tableColumns}
+        dataSource={positionRows(rows)}
+        pagination={false}
+      />
+    </div>
   )
 }

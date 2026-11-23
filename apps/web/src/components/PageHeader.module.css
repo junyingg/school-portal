@@ -10,3 +10,18 @@
   font-size: 28px;
   font-weight: 700;
 }
+
+/* The heading is focused programmatically after navigation for screen readers, not tabbed to. */
+.title:focus {
+  outline: none;
+}
+
+@media (max-width: 600px) {
+  .header {
+    gap: 12px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}

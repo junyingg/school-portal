@@ -2,6 +2,7 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
+    "lib": ["es2025", "dom"],
     "types": ["node"]
   },
   "include": ["tests", "support", "playwright.config.ts"]

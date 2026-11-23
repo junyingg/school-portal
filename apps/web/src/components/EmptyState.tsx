@@ -3,7 +3,7 @@ import styles from "./EmptyState.module.css"
 
 interface EmptyStateProps {
   readonly message: string
-  readonly action: ReactNode
+  readonly action?: ReactNode | undefined
 }
 
 export function EmptyState({ message, action }: EmptyStateProps) {

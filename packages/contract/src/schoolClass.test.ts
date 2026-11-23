@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 import { SPEC_CLASSES, SPEC_CREATE_CLASS_REQUEST, SPEC_TEACHERS } from "./examples.ts"
-import { LEVEL_NOT_LISTED_MESSAGE } from "./fieldRules.ts"
+import { CLASS_LEVEL_MAX_LENGTH } from "./fieldRules.ts"
 import { CLASS_LEVELS } from "./optionLists.ts"
 import {
   classListResponseSchema,
@@ -27,14 +27,20 @@ describe("createClassRequestSchema", () => {
     expect(createClassRequestSchema.parse({ ...CLASS_1A, level }).level).toBe(level)
   })
 
-  it.each(["Secondary 3", "primary 1", "Primary 7"])("rejects the level %s", (level) => {
-    expect(issueMessages({ ...CLASS_1A, level })).toEqual([LEVEL_NOT_LISTED_MESSAGE])
-  })
+  it.each(["Secondary 3", "primary 1", "Primary 7", "  Secondary 3  "])(
+    "accepts the level %j, trimming it",
+    (level) => {
+      expect(createClassRequestSchema.parse({ ...CLASS_1A, level }).level).toBe(level.trim())
+    },
+  )
 
-  it("trims a listed level before matching", () => {
-    expect(createClassRequestSchema.parse({ ...CLASS_1A, level: " Primary 1 " }).level).toBe(
-      "Primary 1",
-    )
+  it("accepts a level at the maximum length and rejects one over it", () => {
+    const longest = "x".repeat(CLASS_LEVEL_MAX_LENGTH)
+
+    expect(createClassRequestSchema.parse({ ...CLASS_1A, level: longest }).level).toBe(longest)
+    expect(issueMessages({ ...CLASS_1A, level: "x".repeat(CLASS_LEVEL_MAX_LENGTH + 1) })).toEqual([
+      `level must be at most ${CLASS_LEVEL_MAX_LENGTH} characters`,
+    ])
   })
 
   it("rejects a non-string level or teacherEmail", () => {

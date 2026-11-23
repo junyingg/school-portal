@@ -8,6 +8,7 @@ export interface SubmitThenReturn<Values> {
 export function useSubmitThenReturn<Values>(
   create: (values: Values) => Promise<unknown>,
   returnPath: string,
+  onSuccess?: () => void,
 ): SubmitThenReturn<Values> {
   const navigate = useNavigate()
 
@@ -21,6 +22,7 @@ export function useSubmitThenReturn<Values>(
       () => false,
     )
     if (wasCreated) {
+      onSuccess?.()
       goBack()
     }
   }

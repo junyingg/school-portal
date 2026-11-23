@@ -2,7 +2,7 @@ import type { SchoolClass } from "@school-portal/contract"
 import { DataTable, type DataColumn } from "../../components/ui/index.ts"
 
 const CLASS_COLUMNS: readonly DataColumn<SchoolClass>[] = [
-  { key: "position", title: "#", render: (_schoolClass, position) => position },
+  { key: "position", title: "#", width: 56, render: (_schoolClass, position) => position },
   { key: "level", title: "Class Level", render: (schoolClass) => schoolClass.level },
   { key: "name", title: "Class Name", render: (schoolClass) => schoolClass.name },
   {

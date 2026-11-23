@@ -40,7 +40,19 @@ describe("TeacherForm", () => {
     renderForm()
 
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute("placeholder", "Name")
-    expect(screen.getByRole("combobox", { name: "Subject" })).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveAttribute("aria-required", "true")
+    expect(screen.getByRole("textbox", { name: "Email Address" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
+    expect(screen.getByRole("textbox", { name: "Work Contact Number" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
+    expect(screen.getByRole("combobox", { name: "Subject" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
     expect(screen.getByText("Select a subject")).toBeInTheDocument()
     expect(screen.getByRole("textbox", { name: "Email Address" })).toHaveAttribute(
       "placeholder",
@@ -104,7 +116,7 @@ describe("TeacherForm", () => {
     await user.type(screen.getByRole("textbox", { name: "Name" }), "Gao Ah Xing")
     await chooseSubject(user, "English Language")
     await user.type(screen.getByRole("textbox", { name: "Email Address" }), "teacher@gov")
-    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "9283 9999")
+    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "9283 999")
     await user.click(screen.getByRole("button", { name: "Add Teacher" }))
 
     expect(await screen.findByText("This email address is invalid.")).toBeInTheDocument()

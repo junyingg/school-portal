@@ -2,6 +2,7 @@ import { FORM_TEACHER_TAKEN_MESSAGE, unknownTeacherEmailMessage } from "@school-
 import { screen, within } from "@testing-library/react"
 import { userEvent, type UserEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
+import { readClassDraft } from "../features/classes/classDraft.ts"
 import { AppRoutes } from "../routes.tsx"
 import { designTeachers } from "../test/designFixtures.ts"
 import {
@@ -21,6 +22,14 @@ function formTeacherField(): HTMLElement {
   const field = screen.getByRole("combobox", { name: "Form Teacher" }).closest(".ant-form-item")
   if (!(field instanceof HTMLElement)) {
     throw new Error("Form Teacher field not found")
+  }
+  return field
+}
+
+function classLevelField(): HTMLElement {
+  const field = screen.getByRole("combobox", { name: "Class Level" }).closest(".ant-form-item")
+  if (!(field instanceof HTMLElement)) {
+    throw new Error("Class Level field not found")
   }
   return field
 }
@@ -78,6 +87,58 @@ describe("AddClassPage", () => {
     ).toBeInTheDocument()
   })
 
+  it("preserves the class draft across the Add Teacher round trip", async () => {
+    server.use(teachersEmpty())
+    const user = userEvent.setup()
+    renderAddClassPage()
+    await screen.findAllByText("No existing teachers.")
+
+    await choose(user, "Class Level", "Primary 3")
+    await user.type(screen.getByRole("textbox", { name: "Class Name" }), "Class 3C")
+    await user.click(screen.getByRole("combobox", { name: "Form Teacher" }))
+    const popup = document.querySelector(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
+    if (!(popup instanceof HTMLElement)) {
+      throw new Error("Form Teacher popup not open")
+    }
+    await user.click(within(popup).getByRole("link", { name: "Add a teacher" }))
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Add Teacher" }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Back" }))
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Add Class" })).toBeInTheDocument()
+    expect(within(classLevelField()).getByTitle("Primary 3")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Class Name" })).toHaveValue("Class 3C")
+  })
+
+  it("returns to Add Class after saving a teacher from the no-teachers link", async () => {
+    server.use(teachersEmpty())
+    const user = userEvent.setup()
+    renderAddClassPage()
+    await screen.findAllByText("No existing teachers.")
+
+    await choose(user, "Class Level", "Primary 3")
+    await user.type(screen.getByRole("textbox", { name: "Class Name" }), "Class 3C")
+    await user.click(screen.getByRole("combobox", { name: "Form Teacher" }))
+    const popup = document.querySelector(".ant-select-dropdown:not(.ant-select-dropdown-hidden)")
+    if (!(popup instanceof HTMLElement)) {
+      throw new Error("Form Teacher popup not open")
+    }
+    await user.click(within(popup).getByRole("link", { name: "Add a teacher" }))
+
+    await screen.findByRole("heading", { level: 1, name: "Add Teacher" })
+    await user.type(screen.getByRole("textbox", { name: "Name" }), "New Teacher")
+    await choose(user, "Subject", "Mathematics")
+    await user.type(screen.getByRole("textbox", { name: "Email Address" }), "new@example.com")
+    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "91234567")
+    await user.click(screen.getByRole("button", { name: "Add Teacher" }))
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Add Class" })).toBeInTheDocument()
+    expect(within(classLevelField()).getByTitle("Primary 3")).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Class Name" })).toHaveValue("Class 3C")
+  })
+
   it("shows the three required messages and sends nothing", async () => {
     const user = userEvent.setup()
     renderAddClassPage()
@@ -101,6 +162,7 @@ describe("AddClassPage", () => {
     const rows = within(table).getAllByRole("row")
     expect(rows).toHaveLength(7)
     expect(rows[6]).toHaveTextContent("6Primary 1Class 1BChen Bing Bing")
+    expect(readClassDraft()).toBeUndefined()
   })
 
   it("disables the button while adding and sends one request on a double click", async () => {
@@ -143,6 +205,17 @@ describe("AddClassPage", () => {
     )
     expect(formTeacher).toHaveFocus()
     expectClass1BKept()
+
+    await user.type(screen.getByRole("textbox", { name: "Class Name" }), " Updated")
+    expect(
+      screen.getByText("This teacher is already the form teacher of another class."),
+    ).toBeInTheDocument()
+
+    await choose(user, "Form Teacher", "Hannah Low")
+    expect(
+      screen.queryByText("This teacher is already the form teacher of another class."),
+    ).not.toBeInTheDocument()
+    expect(formTeacher).not.toHaveAttribute("aria-invalid", "true")
   })
 
   it("shows an unknown form teacher under Form Teacher", async () => {

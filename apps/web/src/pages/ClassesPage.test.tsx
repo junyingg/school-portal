@@ -23,6 +23,7 @@ describe("ClassesPage", () => {
     )
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
     expect(screen.queryByText(EMPTY_MESSAGE)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Add Class" })).toBeInTheDocument()
   })
 
   it("shows the empty state with one Add Class button that opens the form", async () => {
@@ -31,6 +32,7 @@ describe("ClassesPage", () => {
     renderClassesPage()
 
     expect(await screen.findByText(EMPTY_MESSAGE)).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Add Class" })).toHaveLength(1)
     await user.click(screen.getByRole("button", { name: "Add Class" }))
 
     expect(await screen.findByRole("heading", { level: 1, name: "Add Class" })).toBeInTheDocument()
@@ -51,6 +53,7 @@ describe("ClassesPage", () => {
     renderClassesPage()
 
     const retry = await screen.findByRole("button", { name: "Retry" })
+    expect(screen.getByRole("button", { name: "Add Class" })).toBeInTheDocument()
     server.resetHandlers()
     await user.click(retry)
 

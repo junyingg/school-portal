@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { z } from "zod"
 import { SPEC_TEACHERS } from "./examples.ts"
-import { SUBJECT_NOT_LISTED_MESSAGE } from "./fieldRules.ts"
+import { SUBJECT_MAX_LENGTH } from "./fieldRules.ts"
 import { SUBJECTS } from "./optionLists.ts"
 import { createTeacherRequestSchema, teacherListResponseSchema, teacherSchema } from "./teacher.ts"
 
@@ -35,14 +35,20 @@ describe("createTeacherRequestSchema", () => {
     expect(createTeacherRequestSchema.parse({ ...MARY, subject }).subject).toBe(subject)
   })
 
-  it("trims a listed subject before matching", () => {
-    expect(createTeacherRequestSchema.parse({ ...MARY, subject: " Mathematics " }).subject).toBe(
-      "Mathematics",
-    )
-  })
+  it.each(["Chemistry", "mathematics", "Physics", "  Physics  "])(
+    "accepts the subject %j, trimming it",
+    (subject) => {
+      expect(createTeacherRequestSchema.parse({ ...MARY, subject }).subject).toBe(subject.trim())
+    },
+  )
 
-  it.each(["Chemistry", "mathematics"])("rejects the subject %s", (subject) => {
-    expect(issueMessages({ ...MARY, subject })).toEqual([SUBJECT_NOT_LISTED_MESSAGE])
+  it("accepts a subject at the maximum length and rejects one over it", () => {
+    const longest = "x".repeat(SUBJECT_MAX_LENGTH)
+
+    expect(createTeacherRequestSchema.parse({ ...MARY, subject: longest }).subject).toBe(longest)
+    expect(issueMessages({ ...MARY, subject: "x".repeat(SUBJECT_MAX_LENGTH + 1) })).toEqual([
+      `subject must be at most ${SUBJECT_MAX_LENGTH} characters`,
+    ])
   })
 
   it("rejects a non-string subject", () => {

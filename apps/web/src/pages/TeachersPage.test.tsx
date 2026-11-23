@@ -23,6 +23,7 @@ describe("TeachersPage", () => {
     )
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
     expect(screen.queryByText(EMPTY_MESSAGE)).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Add Teacher" })).toBeInTheDocument()
   })
 
   it("shows the empty state with one Add Teacher button that opens the form", async () => {
@@ -31,6 +32,7 @@ describe("TeachersPage", () => {
     renderTeachersPage()
 
     expect(await screen.findByText(EMPTY_MESSAGE)).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Add Teacher" })).toHaveLength(1)
     await user.click(screen.getByRole("button", { name: "Add Teacher" }))
 
     expect(
@@ -53,6 +55,7 @@ describe("TeachersPage", () => {
     renderTeachersPage()
 
     const retry = await screen.findByRole("button", { name: "Retry" })
+    expect(screen.getByRole("button", { name: "Add Teacher" })).toBeInTheDocument()
     server.resetHandlers()
     await user.click(retry)
 

@@ -1,16 +1,15 @@
 import { z } from "zod"
 import {
-  SUBJECT_NOT_LISTED_MESSAGE,
+  SUBJECT_MAX_LENGTH,
   contactNumberField,
   emailField,
-  listedValue,
   personName,
+  requiredText,
 } from "./fieldRules.ts"
-import { SUBJECTS } from "./optionLists.ts"
 
 export const createTeacherRequestSchema = z.object({
   name: personName("name"),
-  subject: listedValue("subject", SUBJECTS, SUBJECT_NOT_LISTED_MESSAGE),
+  subject: requiredText("subject", SUBJECT_MAX_LENGTH),
   email: emailField("email"),
   contactNumber: contactNumberField(),
 })

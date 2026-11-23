@@ -27,6 +27,7 @@ export interface TeacherFormProps {
   readonly isSubmitting: boolean
   readonly serverError?: TeacherServerError | undefined
   readonly bannerMessage?: string | undefined
+  readonly onEdit?: ((field: TeacherFieldName) => void) | undefined
 }
 
 const SUBJECT_OPTIONS = SUBJECTS.map((subject) => ({ label: subject, value: subject }))
@@ -39,6 +40,7 @@ export function TeacherForm({
   isSubmitting,
   serverError,
   bannerMessage,
+  onEdit,
 }: TeacherFormProps) {
   const { control, handleSubmit, formState, setFocus } = useForm<
     TeacherFormInput,
@@ -74,6 +76,7 @@ export function TeacherForm({
         label={LABELS.name}
         placeholder={PLACEHOLDERS.name}
         serverMessage={serverMessageFor("name")}
+        onEdit={() => onEdit?.("name")}
       />
       <ControlledSelect
         control={control}
@@ -82,6 +85,7 @@ export function TeacherForm({
         placeholder={PLACEHOLDERS.subject}
         options={SUBJECT_OPTIONS}
         serverMessage={serverMessageFor("subject")}
+        onEdit={() => onEdit?.("subject")}
       />
       <ControlledTextInput
         control={control}
@@ -89,6 +93,7 @@ export function TeacherForm({
         label={LABELS.email}
         placeholder={PLACEHOLDERS.email}
         serverMessage={serverMessageFor("email")}
+        onEdit={() => onEdit?.("email")}
       />
       <ControlledTextInput
         control={control}
@@ -96,6 +101,7 @@ export function TeacherForm({
         label={LABELS.contactNumber}
         placeholder={PLACEHOLDERS.contactNumber}
         serverMessage={serverMessageFor("contactNumber")}
+        onEdit={() => onEdit?.("contactNumber")}
       />
     </FormShell>
   )

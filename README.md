@@ -1,6 +1,6 @@
 # School Portal
 
-An admin web app and REST API for registering teachers and adding classes, each with exactly one form teacher. It is one TypeScript repository: a Fastify API on PostgreSQL, a React and Ant Design web app, and a shared Zod contract that both sides validate against. Everything runs with one command in Docker, behind nginx.
+An admin web app and REST API for registering teachers and adding classes, each with exactly one form teacher. It is one TypeScript repository: a Fastify API on PostgreSQL, a React and Ant Design web app, and a shared Zod contract that both sides validate against. The full stack runs in Docker, behind nginx.
 
 ## Hosted links
 
@@ -8,9 +8,9 @@ Not deployed. The app runs locally with Docker; see [Quick start](#quick-start).
 
 ## Prerequisites
 
-- **Node.js 26.13.1** and **pnpm 12.21.0**, pinned in `.node-version`, `mise.toml` and `packageManager`.
+- **Node.js 24.0 or newer, below 27**, and **pnpm 12.21.0**. The repository pins 26.13.1 in `.node-version` and `mise.toml`; CI runs both 24.21.0 and 26.13.1. The Docker images use Node 26.
   - With [mise](https://mise.jdx.dev): `mise install`.
-  - Without mise: install Node.js 26.13.1, then `npm install --global pnpm@12.21.0`. Node.js 26 ships without Corepack.
+  - Without mise: install Node.js 24 or newer, then `npm install --global pnpm@12.21.0`.
 - **Docker** with Compose v2. On macOS, Colima or Docker Desktop both work.
 
 ## Quick start
@@ -24,7 +24,14 @@ pnpm stack:up
 - Web app: http://localhost:8080
 - API: http://localhost:8080/api
 
-`pnpm env:init` writes `.env` with random database passwords and refuses to overwrite an existing one. `pnpm stack:up` builds both images, starts PostgreSQL, runs the migration once, then starts the API and the web server and waits until each is healthy. `pnpm stack:down` stops the stack and deletes its data volume.
+`pnpm env:init` writes `.env` with random database passwords and refuses to overwrite an existing one. `pnpm stack:up` builds both images, starts PostgreSQL, runs the migration once, then starts the API and the web server and waits until PostgreSQL and the API are healthy and the web server is running. `pnpm stack:down` stops the stack and deletes its data volume.
+
+If Node.js 24+ is available but pnpm is not, the built stack needs only the host-side environment file:
+
+```sh
+node scripts/initEnv.ts
+docker compose up --build --wait
+```
 
 Set `WEB_PORT` in `.env` if port 8080 is taken.
 
@@ -42,7 +49,7 @@ The dev override publishes PostgreSQL on `127.0.0.1:5432` only. The API reads `.
 
 ## API
 
-Every request and response body is JSON. Every response, including errors from nginx, has `Content-Type: application/json; charset=utf-8`.
+Every API request and response body is JSON. Every API response, including errors from nginx, has `Content-Type: application/json; charset=utf-8`.
 
 ### Register a teacher
 
@@ -129,8 +136,6 @@ Every error body is `{ "error": "<message>" }`. Several validation problems are 
 | Malformed JSON                                                         | 400    | Request body must be valid JSON                                     |
 | Body is not a JSON object, is empty, or is missing                     | 400    | Request body must be a JSON object                                  |
 | A field is missing, empty, the wrong type, too long or badly formatted | 400    | for example `name is required; email must be a valid email address` |
-| Subject not in the list                                                | 400    | `subject must be one of: English Language, …`                       |
-| Level not in the list                                                  | 400    | `level must be one of: Primary 1, …`                                |
 | Unknown `teacherEmail`                                                 | 400    | No teacher found with email `<email>`                               |
 | Body length does not match `Content-Length`                            | 400    | Request body size did not match Content-Length                      |
 | Teacher email already registered (case-insensitive)                    | 409    | A teacher with this email already exists                            |
@@ -141,17 +146,19 @@ Every error body is `{ "error": "<message>" }`. Several validation problems are 
 | `PUT`, `PATCH` or `DELETE` on either path                              | 405    | Method not allowed (with `Allow: GET, HEAD, POST`)                  |
 | Any other server failure                                               | 500    | Internal server error (details are logged, never returned)          |
 
-nginx adds four of its own, in the same shape:
+The API does not define `OPTIONS`; with CORS off it returns the JSON `404`. `GET /api` without a trailing slash is served by nginx as a JSON `404` too.
+
+nginx adds its own, in the same shape:
 
 | Case                                                  | Status        | `error`                |
 | ----------------------------------------------------- | ------------- | ---------------------- |
 | Body over 1 MiB                                       | 413           | Request body too large |
-| More than about 20 requests a second from one address | 429           | Too many requests      |
+| More than about 50 requests a second from one address | 429           | Too many requests      |
 | API unreachable, unavailable or too slow              | 502, 503, 504 | Service unavailable    |
 
 ### OpenAPI
 
-`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It does not list the allowed subject and level values, because the request schema trims a value before matching it against the list and the generator shows only the trimming step. The lists are under [Rules added from the design](#rules-added-from-the-design-enforced).
+`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It describes `subject` and `level` as bounded strings; the web form narrows them to the Figma lists, while the API accepts any non-empty value because the written API contract does not define a closed list. Router-level `404`/`405` responses are documented in the error table rather than on each operation, because they are not operation-level outcomes.
 
 ### Health
 
@@ -166,7 +173,7 @@ The API serves `GET /healthz` (the process is up) and `GET /readyz` (the databas
 | Unit and component with coverage thresholds | `pnpm test:coverage`    | nothing           | The same tests, failing below the coverage targets                                                                                                        |
 | API integration                             | `pnpm test:integration` | Docker            | Real PostgreSQL 18 (Testcontainers) as the restricted app role: exact bodies, case-insensitive uniqueness, constraint mapping, ten-way races, role grants |
 | Contract                                    | `pnpm test:contract`    | the running stack | The deployed stack through nginx with Newman: statuses, content type, JSON Schemas generated from the contract, error shape, nginx's JSON error pages     |
-| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows and the form-teacher conflict in Chromium (Playwright)                                                                                    |
+| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows, the form-teacher conflict, responsive widths and a WCAG A/AA axe scan in Chromium (Playwright)                                           |
 
 `pnpm test` runs the unit and component layers. Before the first end-to-end run, install the browser with `pnpm -F @school-portal/e2e exec playwright install chromium`.
 
@@ -182,7 +189,7 @@ Static checks: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm audit:p
 
 ### Postman
 
-Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`.
+Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`. The environment's `baseUrl` is fixed at `http://localhost:8080`; change it there if you change `WEB_PORT`.
 
 ## Assumptions
 
@@ -191,10 +198,10 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 3. An unknown `teacherEmail` returns 400 and names the email.
 4. A teacher who is already a form teacher returns 409.
 5. A class's level and name together are not unique; only the form-teacher rule applies. See the suggestions below.
-6. Subject and level must come from the design's fixed lists; see [Rules added from the design](#rules-added-from-the-design-enforced).
-7. Contact number: the web form strips spaces and requires 8 digits starting with 6, matching the design's error example. The API requires 8 digits (surrounding spaces trimmed, inner spaces rejected) and does not enforce the leading 6, because that rule is inferred rather than documented.
+6. The web form restricts subject and level to the design's fixed lists; the API accepts any non-empty string, because the written API contract does not define those lists. See [Design controls and API validation](#design-controls-and-api-validation).
+7. Contact number: both the web form and the API strip whitespace and require exactly 8 digits. Neither enforces a leading 6; that rule was inferred from one design error example and would reject valid mobile-style work numbers.
 8. Email uses a simple `local@domain.tld` check in both the form and the API. `teacher@gov.sg` is accepted, although the design's error example shows it as invalid.
-9. Length limits: 100 characters for a teacher name, 50 for a class name, 254 for an email.
+9. Length limits: 100 characters for a teacher name, 100 for a subject, 50 for a class name, 50 for a class level, 254 for an email.
 10. Lists are returned in insertion order, without pagination.
 11. Unknown request fields are ignored.
 12. A body with a non-JSON `Content-Type` returns 415; a POST with no body returns 400.
@@ -207,31 +214,24 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 19. Migrations run as a separate step before the API starts. No seed data is provided.
 20. Update, delete and reassignment are not supported.
 21. Names may contain any Unicode except control characters.
-22. Rate limiting is done by nginx: about 20 requests a second per address, with a burst of 100.
+22. Rate limiting is done by nginx: 50 requests a second per address, with a burst of 200.
 23. The web app shows contact numbers as `6736 3939`; the API stores and returns eight digits.
+24. Add Class keeps a one-hour session draft. It survives the "Add a teacher" round trip and is cleared after a successful save or an explicit Back.
 
-## Rules added from the design (enforced)
+## Design controls and API validation
 
-The specification lists no field rules. The linked Figma's documentation card does, and this submission enforces them in both the web form and the API:
+The written specification does not constrain subject or level. The linked Figma's documentation card does, so the **web form** offers the design's lists:
 
-- **Subject** must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education.
-- **Class level** must be one of: Primary 1 to Primary 6.
-- Both are trimmed and then matched exactly, so `mathematics` is rejected. The 400 message lists the allowed values.
-- **Contact number**: the web form also requires a leading 6, inferred from one error example in the design. The API does not, because that evidence is weak.
+- **Subject**: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education.
+- **Class level**: Primary 1 to Primary 6.
 
-| For enforcing the lists in the API                                | Against                                                                                                          |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| The web app and the API accept and reject exactly the same values | The specification's text states none of these rules                                                              |
-| A direct API call cannot store a value the form would refuse      | An automated tester sending an unlisted subject or level gets 400, and its class tests for that teacher fail too |
-| Allow-list validation is the safer kind of input validation       | Adding a subject or level needs a code change and a deploy                                                       |
-| Reports by subject or level never meet typos                      | Exact matching is strict for API clients                                                                         |
+The **API** accepts any non-empty string for those fields, up to 100 characters for a subject and 50 for a class level. This keeps direct API clients compatible with the published contract and avoids rejecting values an automated tester considers valid, while the form still preserves the design's input controls. Moving these lists into lookup tables would let the form change without a deploy.
 
-Every value in the specification's examples passes. Loosening the rules is a change to `packages/contract/src/fieldRules.ts` and `optionLists.ts`.
+**Contact number**: both sides remove whitespace and require exactly 8 digits. The leading-6 rule was inferred from one design error example and is not enforced, because it would reject valid mobile-style work numbers.
 
 ## API design suggestions
 
 - Move the subject and level lists into lookup tables, so they can change without a deploy.
-- Accept mobile numbers if work contacts can be mobile.
 - Decide whether a class's level and name should be unique.
 - Return a `Location` header with each 201.
 - Add a stable machine-readable `code` next to `error`.
@@ -250,13 +250,13 @@ Browser ──► nginx :8080 ─┬─ /      static web app (React, Ant Design
                                        routes → handlers → services → repositories
 ```
 
-- **Rules that must survive concurrency live in the database.** A unique index on `lower(email)` and a unique `form_teacher_id` decide races; there is no check-then-insert in code. A test fires ten requests at once and gets exactly one 201.
+- **Rules that must survive concurrency live in the database.** A unique index on `lower(email)` and a unique `form_teacher_id` decide races, not check-then-insert. Class creation still looks up the teacher before inserting; the unique `form_teacher_id` index closes the race. A test fires ten requests at once and gets exactly one 201.
 - **Two database roles.** A migrator role owns the schema; the API connects as an app role that can only `SELECT` and `INSERT`.
 - **Migrations run as their own step**, never on API start-up.
 - **Input is validated at the edge** by the shared Zod contract. Queries are always parameterised (Kysely).
 - **Body limits**: 16 KiB in the API, 1 MiB in nginx. The API accepts JSON only.
 - **Errors never leak internals.** Stack traces and SQL go to the logs, with a request id, never to the client.
-- **Headers**: Helmet on the API, with a CSP of `default-src 'none'`; a strict CSP and other security headers on the web app. Zod runs without `new Function`, so the CSP needs no `unsafe-eval`.
+- **Headers**: Helmet on the API, with a CSP of `default-src 'none'`; a strict CSP and other security headers on the web app. API responses also send `Cache-Control: no-store` because they contain teacher contact details. Zod runs without `new Function`, so the CSP needs no `unsafe-eval`.
 - **CORS is off** unless `CORS_ALLOWED_ORIGINS` is set; the web app and API share an origin through nginx.
 - **Rate limiting** is in nginx, so the API holds no per-process state.
 - **Configuration** comes from the environment and is validated at start-up. Secrets are generated by `pnpm env:init` and never committed.

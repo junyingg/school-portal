@@ -14,6 +14,7 @@ interface ControlledSelectProps<Values extends FieldValues, Output> {
   readonly emptyContent?: ReactNode
   readonly footnote?: ReactNode
   readonly onOpenChange?: (isOpen: boolean) => void
+  readonly onEdit?: (() => void) | undefined
 }
 
 export function ControlledSelect<Values extends FieldValues, Output>({
@@ -27,6 +28,7 @@ export function ControlledSelect<Values extends FieldValues, Output>({
   emptyContent,
   footnote,
   onOpenChange,
+  onEdit,
 }: ControlledSelectProps<Values, Output>) {
   const { controlId, messageId } = useFieldIds()
   return (
@@ -53,7 +55,10 @@ export function ControlledSelect<Values extends FieldValues, Output>({
               describedBy={message === undefined ? undefined : messageId}
               isLoading={isLoading}
               emptyContent={emptyContent}
-              onChange={field.onChange}
+              onChange={(value) => {
+                field.onChange(value)
+                onEdit?.()
+              }}
               onBlur={field.onBlur}
               {...(onOpenChange === undefined ? {} : { onOpenChange })}
             />

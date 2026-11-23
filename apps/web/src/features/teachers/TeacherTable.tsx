@@ -3,7 +3,7 @@ import { DataTable, type DataColumn } from "../../components/ui/index.ts"
 import { formatContactNumber } from "./formatContactNumber.ts"
 
 const TEACHER_COLUMNS: readonly DataColumn<Teacher>[] = [
-  { key: "position", title: "#", render: (_teacher, position) => position },
+  { key: "position", title: "#", width: 56, render: (_teacher, position) => position },
   { key: "name", title: "Name", render: (teacher) => teacher.name },
   { key: "subject", title: "Subject", render: (teacher) => teacher.subject },
   { key: "email", title: "Email", render: (teacher) => teacher.email },

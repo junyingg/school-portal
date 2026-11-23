@@ -59,14 +59,14 @@ export function ListPage<Item>({ copy, query, onAdd, renderList }: ListPageProps
       )
     }
     if (!hasItems) {
-      return <EmptyState message={copy.emptyMessage} action={addButton} />
+      return <EmptyState message={copy.emptyMessage} />
     }
     return renderList(items)
   }
 
   return (
     <>
-      <PageHeader title={copy.title} action={hasItems ? addButton : undefined} />
+      <PageHeader title={copy.title} action={addButton} />
       <Card label={copy.title} isBusy={query.isPending}>
         {renderCardContent()}
       </Card>

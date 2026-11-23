@@ -218,6 +218,7 @@ describe("security headers", () => {
     const response = await app.inject({ method: "GET", url: "/nope" })
 
     expect(response.headers["x-content-type-options"]).toBe("nosniff")
+    expect(response.headers["cache-control"]).toBe("no-store")
     expect(response.headers["content-security-policy"]).toContain("default-src 'none'")
     expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'")
     expect(response.headers["x-powered-by"]).toBeUndefined()

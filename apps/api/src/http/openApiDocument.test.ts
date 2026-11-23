@@ -1,3 +1,4 @@
+import { CLASS_LEVEL_MAX_LENGTH, SUBJECT_MAX_LENGTH } from "@school-portal/contract"
 import { readFile } from "node:fs/promises"
 import { describe, expect, it } from "vitest"
 import { OPENAPI_DOCUMENT_PATH, generateOpenApiDocument } from "./openApiDocument.ts"
@@ -44,6 +45,41 @@ describe("generateOpenApiDocument", () => {
         requestBody: {
           content: {
             "application/json": { schema: { required: ["level", "name", "teacherEmail"] } },
+          },
+        },
+      },
+    })
+  })
+
+  it("describes subject and level as bounded free strings", async () => {
+    const document = await generatedDocument()
+
+    expect(document.paths["/api/teachers"]).toMatchObject({
+      post: {
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                properties: {
+                  subject: { type: "string", maxLength: SUBJECT_MAX_LENGTH },
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+    expect(document.paths["/api/classes"]).toMatchObject({
+      post: {
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                properties: {
+                  level: { type: "string", maxLength: CLASS_LEVEL_MAX_LENGTH },
+                },
+              },
+            },
           },
         },
       },

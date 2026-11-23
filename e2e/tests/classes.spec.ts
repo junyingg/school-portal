@@ -50,6 +50,28 @@ test("shows a form-teacher conflict under Form Teacher and keeps the values", as
   await expect(page.getByRole("textbox", { name: "Class Name" })).toHaveValue(secondClass)
 })
 
+test("keeps the class draft across the Add Teacher round trip", async ({ page }) => {
+  await page.route("**/api/teachers", (route) => {
+    if (route.request().method() !== "GET") {
+      return route.continue()
+    }
+    return route.fulfill({ json: { data: [] } })
+  })
+
+  await page.goto("/classes/new")
+  await choose(page, "Class Level", "Primary 3")
+  await page.getByRole("textbox", { name: "Class Name" }).fill("Class 3C")
+  await page.getByRole("combobox", { name: "Form Teacher" }).click()
+  await openPopup(page).getByRole("link", { name: "Add a teacher" }).click()
+
+  await expect(page).toHaveURL(/\/teachers\/new$/)
+  await page.getByRole("button", { name: "Back" }).click()
+
+  await expect(page).toHaveURL(/\/classes\/new$/)
+  await expect(page.getByTitle("Primary 3")).toBeVisible()
+  await expect(page.getByRole("textbox", { name: "Class Name" })).toHaveValue("Class 3C")
+})
+
 test("shows the empty state (stubbed API)", async ({ page }) => {
   await page.route("**/api/classes", (route) => route.fulfill({ json: { data: [] } }))
 

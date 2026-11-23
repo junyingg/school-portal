@@ -37,4 +37,5 @@ setupMswServer()
 
 afterEach(() => {
   cleanup()
+  sessionStorage.clear()
 })

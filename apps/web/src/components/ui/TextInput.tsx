@@ -30,6 +30,7 @@ export function TextInput({
       placeholder={placeholder}
       status={isInvalid ? "error" : ""}
       aria-invalid={isInvalid}
+      aria-required="true"
       aria-describedby={describedBy}
       onChange={(event) => {
         onChange(event.target.value)

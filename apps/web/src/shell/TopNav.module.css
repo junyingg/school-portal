@@ -21,3 +21,34 @@
   display: flex;
   height: 100%;
 }
+
+@media (max-width: 600px) {
+  .bar {
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .brand {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+
+  .tab {
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .bar {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .brand {
+    font-size: 15px;
+  }
+
+  .tab {
+    padding: 0 6px;
+  }
+}

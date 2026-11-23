@@ -3,9 +3,7 @@ import type { z } from "zod"
 import {
   CONTACT_NUMBER_MESSAGE,
   CONTACT_NUMBER_PATTERN,
-  LEVEL_NOT_LISTED_MESSAGE,
   SIMPLE_EMAIL_PATTERN,
-  SUBJECT_NOT_LISTED_MESSAGE,
   contactNumberField,
   emailField,
   requiredText,
@@ -33,11 +31,12 @@ describe("contactNumberField", () => {
     expect(contactNumberField().parse(value)).toBe(value)
   })
 
-  it("trims surrounding spaces", () => {
-    expect(contactNumberField().parse(" 61234567 ")).toBe("61234567")
+  it("strips all whitespace before matching", () => {
+    expect(contactNumberField().parse(" 6123 4567 ")).toBe("61234567")
+    expect(contactNumberField().parse("6 1 2 3 4 5 6 7")).toBe("61234567")
   })
 
-  it.each(["6123 4567", "6123456", "612345678", "6123456a", "６１２３４５６７"])(
+  it.each(["6123456", "612345678", "6123456a", "6123-4567", "６１２３４５６７"])(
     "rejects %s",
     (value) => {
       expect(issueMessages(contactNumberField(), value)).toEqual([CONTACT_NUMBER_MESSAGE])
@@ -55,15 +54,9 @@ describe("contactNumberField", () => {
   })
 })
 
-describe("message constants", () => {
-  it("hold their exact text", () => {
+describe("CONTACT_NUMBER_MESSAGE", () => {
+  it("holds its exact text", () => {
     expect(CONTACT_NUMBER_MESSAGE).toBe("contactNumber must be 8 digits")
-    expect(SUBJECT_NOT_LISTED_MESSAGE).toBe(
-      "subject must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education",
-    )
-    expect(LEVEL_NOT_LISTED_MESSAGE).toBe(
-      "level must be one of: Primary 1, Primary 2, Primary 3, Primary 4, Primary 5, Primary 6",
-    )
   })
 })
 

@@ -29,13 +29,23 @@ describe("ClassForm", () => {
   it("shows the design labels, placeholders and buttons", async () => {
     renderForm()
 
-    expect(screen.getByRole("combobox", { name: "Class Level" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: "Class Level" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
     expect(screen.getByText("Select a level")).toBeInTheDocument()
     expect(screen.getByRole("textbox", { name: "Class Name" })).toHaveAttribute(
       "placeholder",
       "Class Name",
     )
-    expect(screen.getByRole("combobox", { name: "Form Teacher" })).toBeInTheDocument()
+    expect(screen.getByRole("textbox", { name: "Class Name" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
+    expect(screen.getByRole("combobox", { name: "Form Teacher" })).toHaveAttribute(
+      "aria-required",
+      "true",
+    )
     expect(await screen.findByText("Assign a form teacher")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Add Class" })).toBeInTheDocument()

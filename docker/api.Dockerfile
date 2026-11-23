@@ -7,6 +7,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/contract/package.json packages/contract/
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
+COPY e2e/package.json e2e/
+COPY postman/package.json postman/
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --filter "@school-portal/api..."
 

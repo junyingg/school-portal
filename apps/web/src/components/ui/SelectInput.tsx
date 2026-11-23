@@ -42,6 +42,7 @@ export function SelectInput({
       placeholder={placeholder}
       status={isInvalid ? "error" : ""}
       aria-invalid={isInvalid}
+      aria-required="true"
       aria-describedby={describedBy}
       aria-busy={isLoading}
       loading={isLoading}

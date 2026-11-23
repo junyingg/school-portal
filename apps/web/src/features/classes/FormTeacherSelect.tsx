@@ -21,7 +21,9 @@ function NoTeachersMessage({ className }: NoTeachersMessageProps) {
   return (
     <div className={className}>
       <span>{FORM_TEACHER_COPY.noTeachers}</span>
-      <Link to={ROUTES.newTeacher}>{FORM_TEACHER_COPY.addTeacher}</Link>
+      <Link to={ROUTES.newTeacher} state={{ returnTo: ROUTES.newClass }}>
+        {FORM_TEACHER_COPY.addTeacher}
+      </Link>
     </div>
   )
 }
@@ -45,12 +47,14 @@ interface FormTeacherSelectProps<Values extends FieldValues, Output> {
   readonly control: Control<Values, unknown, Output>
   readonly name: FieldPath<Values>
   readonly serverMessage?: string | undefined
+  readonly onEdit?: (() => void) | undefined
 }
 
 export function FormTeacherSelect<Values extends FieldValues, Output>({
   control,
   name,
   serverMessage,
+  onEdit,
 }: FormTeacherSelectProps<Values, Output>) {
   const teachers = useTeachers()
   const [isOpen, setIsOpen] = useState(false)
@@ -87,6 +91,7 @@ export function FormTeacherSelect<Values extends FieldValues, Output>({
       }
       footnote={footnote()}
       onOpenChange={setIsOpen}
+      onEdit={onEdit}
     />
   )
 }

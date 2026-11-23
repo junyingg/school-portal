@@ -8,6 +8,7 @@ interface ControlledTextInputProps<Values extends FieldValues, Output> {
   readonly label: string
   readonly placeholder: string
   readonly serverMessage?: string | undefined
+  readonly onEdit?: (() => void) | undefined
 }
 
 export function ControlledTextInput<Values extends FieldValues, Output>({
@@ -16,6 +17,7 @@ export function ControlledTextInput<Values extends FieldValues, Output>({
   label,
   placeholder,
   serverMessage,
+  onEdit,
 }: ControlledTextInputProps<Values, Output>) {
   const { controlId, messageId } = useFieldIds()
   return (
@@ -33,7 +35,10 @@ export function ControlledTextInput<Values extends FieldValues, Output>({
               placeholder={placeholder}
               isInvalid={message !== undefined}
               describedBy={message === undefined ? undefined : messageId}
-              onChange={field.onChange}
+              onChange={(value) => {
+                field.onChange(value)
+                onEdit?.()
+              }}
               onBlur={field.onBlur}
             />
           </FormField>

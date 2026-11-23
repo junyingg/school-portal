@@ -1,15 +1,14 @@
 import { z } from "zod"
-import { CLASS_LEVELS, SUBJECTS } from "./optionLists.ts"
 
 export const NAME_MAX_LENGTH = 100
 export const EMAIL_MAX_LENGTH = 254
 export const CLASS_NAME_MAX_LENGTH = 50
+export const SUBJECT_MAX_LENGTH = 100
+export const CLASS_LEVEL_MAX_LENGTH = 50
 export const CONTACT_NUMBER_PATTERN = /^\d{8}$/
 export const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const CONTROL_CHARACTER_PATTERN = /\p{Cc}/u
 export const CONTACT_NUMBER_MESSAGE = "contactNumber must be 8 digits"
-export const SUBJECT_NOT_LISTED_MESSAGE = `subject must be one of: ${SUBJECTS.join(", ")}`
-export const LEVEL_NOT_LISTED_MESSAGE = `level must be one of: ${CLASS_LEVELS.join(", ")}`
 
 function requiredMessage(field: string): string {
   return `${field} is required`
@@ -44,13 +43,8 @@ export function emailField(field: string) {
 }
 
 export function contactNumberField() {
-  return requiredString("contactNumber").regex(CONTACT_NUMBER_PATTERN, CONTACT_NUMBER_MESSAGE)
-}
-
-export function listedValue<const Values extends readonly [string, ...string[]]>(
-  field: string,
-  values: Values,
-  notListedMessage: string,
-) {
-  return requiredString(field).pipe(z.enum(values, { error: () => notListedMessage }))
+  return z.preprocess(
+    (input) => (typeof input === "string" ? input.replace(/\s+/g, "") : input),
+    requiredString("contactNumber").regex(CONTACT_NUMBER_PATTERN, CONTACT_NUMBER_MESSAGE),
+  )
 }

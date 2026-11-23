@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { CLASS_LEVELS, type CreateClassRequest } from "@school-portal/contract"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { ControlledSelect } from "../../components/ControlledSelect.tsx"
 import { ControlledTextInput } from "../../components/ControlledTextInput.tsx"
@@ -8,6 +9,7 @@ import {
   useFocusFieldOnServerError,
   type ServerFieldError,
 } from "../../hooks/useFocusFieldOnServerError.ts"
+import { readClassDraft, writeClassDraft } from "./classDraft.ts"
 import {
   CLASS_FIELD_LABELS as LABELS,
   CLASS_FIELD_PLACEHOLDERS as PLACEHOLDERS,
@@ -28,6 +30,7 @@ export interface ClassFormProps {
   readonly isSubmitting: boolean
   readonly serverError?: ClassServerError | undefined
   readonly bannerMessage?: string | undefined
+  readonly onEdit?: ((field: ClassFieldName) => void) | undefined
 }
 
 const LEVEL_OPTIONS = CLASS_LEVELS.map((level) => ({ label: level, value: level }))
@@ -40,16 +43,30 @@ export function ClassForm({
   isSubmitting,
   serverError,
   bannerMessage,
+  onEdit,
 }: ClassFormProps) {
-  const { control, handleSubmit, formState, setFocus } = useForm<
+  const [initialValues] = useState<Partial<ClassFormInput>>(() => ({
+    ...EMPTY_CLASS,
+    ...readClassDraft(),
+  }))
+  const { control, handleSubmit, formState, setFocus, watch } = useForm<
     ClassFormInput,
     unknown,
     ClassFormOutput
   >({
     resolver: zodResolver(classFormSchema),
-    defaultValues: EMPTY_CLASS,
+    defaultValues: initialValues,
   })
   useFocusFieldOnServerError(serverError, setFocus)
+
+  useEffect(() => {
+    // react-hook-form's watch() subscription is intentionally used to persist drafts.
+    // eslint-disable-next-line react-hooks/incompatible-library
+    const subscription = watch((values) => {
+      writeClassDraft(values)
+    })
+    return () => subscription.unsubscribe()
+  }, [watch])
 
   function serverMessageFor(field: ClassFieldName): string | undefined {
     return serverError?.field === field ? serverError.message : undefined
@@ -76,6 +93,7 @@ export function ClassForm({
         placeholder={PLACEHOLDERS.level}
         options={LEVEL_OPTIONS}
         serverMessage={serverMessageFor("level")}
+        onEdit={() => onEdit?.("level")}
       />
       <ControlledTextInput
         control={control}
@@ -83,11 +101,13 @@ export function ClassForm({
         label={LABELS.name}
         placeholder={PLACEHOLDERS.name}
         serverMessage={serverMessageFor("name")}
+        onEdit={() => onEdit?.("name")}
       />
       <FormTeacherSelect
         control={control}
         name="teacherEmail"
         serverMessage={serverMessageFor("teacherEmail")}
+        onEdit={() => onEdit?.("teacherEmail")}
       />
     </FormShell>
   )

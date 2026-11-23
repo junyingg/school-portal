@@ -21,7 +21,7 @@ export function FormField({
 }: FormFieldProps) {
   const hasError = error !== undefined
   return (
-    <div className={styles["field"]}>
+    <div className={styles["field"]} data-invalid={hasError ? "true" : undefined}>
       <Form.Item
         label={label}
         htmlFor={controlId}

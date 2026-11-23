@@ -109,6 +109,28 @@ describe("AddTeacherPage", () => {
     expect(email).toHaveAccessibleDescription("This email address is already registered.")
     expect(email).toHaveFocus()
     expectMaryKept()
+
+    await user.type(screen.getByRole("textbox", { name: "Name" }), " Jr")
+    expect(screen.getByText("This email address is already registered.")).toBeInTheDocument()
+
+    await user.clear(email)
+    await user.type(email, "teachermary2@gmail.com")
+    expect(screen.queryByText("This email address is already registered.")).not.toBeInTheDocument()
+    expect(email).not.toHaveAttribute("aria-invalid", "true")
+  })
+
+  it("keeps a banner error while the user edits", async () => {
+    server.use(createTeacherFails(500, "Internal server error"))
+    const user = userEvent.setup()
+    renderAddTeacherPage()
+
+    await fillMary(user)
+    await user.click(screen.getByRole("button", { name: "Add Teacher" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent("Internal server error")
+
+    await user.type(screen.getByRole("textbox", { name: "Name" }), " Jr")
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Internal server error")
   })
 
   it.each([

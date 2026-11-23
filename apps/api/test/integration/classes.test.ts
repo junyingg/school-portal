@@ -1,4 +1,4 @@
-import { LEVEL_NOT_LISTED_MESSAGE, SPEC_CLASSES, SPEC_TEACHERS } from "@school-portal/contract"
+import { SPEC_CLASSES, SPEC_TEACHERS } from "@school-portal/contract"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { buildTestApp, type TestApp } from "./support/buildTestApp.ts"
 import {
@@ -92,15 +92,15 @@ describe("POST /api/classes", () => {
     expect([first.statusCode, second.statusCode]).toEqual([201, 201])
   })
 
-  it("rejects an unlisted level", async () => {
+  it("accepts a level outside the design list", async () => {
     const response = await postJson(
       testApp.app,
       CLASSES_PATH,
       aClassRequest({ level: "Secondary 1" }),
     )
 
-    expect(response.statusCode).toBe(400)
-    expect(response.json()).toStrictEqual({ error: LEVEL_NOT_LISTED_MESSAGE })
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({ level: "Secondary 1" })
   })
 })
 
@@ -125,11 +125,8 @@ describe("GET /api/classes", () => {
     expect(response.json()).toStrictEqual({ data: [CLASS_2B, CLASS_1A] })
   })
 
-  it.each([
-    ["an unknown teacher email", { teacherEmail: "nobody@example.com" }],
-    ["an unlisted level", { level: "Secondary 1" }],
-  ])("stores nothing after %s", async (_case, overrides) => {
-    await postJson(testApp.app, CLASSES_PATH, aClassRequest(overrides))
+  it("stores nothing after an unknown teacher email", async () => {
+    await postJson(testApp.app, CLASSES_PATH, aClassRequest({ teacherEmail: "nobody@example.com" }))
 
     const response = await getJson(testApp.app, CLASSES_PATH)
 
