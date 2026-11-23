@@ -28,6 +28,7 @@ export default defineConfig({
         "apps/api/src/server.ts",
         "apps/api/src/db/migrate.ts",
         "apps/api/src/db/migrations/**",
+        "apps/api/src/**/*Repository.ts",
         "apps/web/src/main.tsx",
         "apps/web/src/components/ui/icons.ts",
         "packages/contract/src/optionLists.ts",
