@@ -4,6 +4,7 @@ import {
   schoolClassSchema,
 } from "@school-portal/contract"
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod"
+import { READ_ERROR_RESPONSES, WRITE_ERROR_RESPONSES } from "../../http/apiErrorResponses.ts"
 import { registerMethodNotAllowed } from "../../http/methodNotAllowed.ts"
 import type { ClassHandlers } from "./classHandlers.ts"
 
@@ -13,12 +14,23 @@ export function createClassRoutes(handlers: ClassHandlers): FastifyPluginCallbac
   return (app, _options, done) => {
     app.post(
       CLASSES_PATH,
-      { schema: { body: createClassRequestSchema, response: { 201: schoolClassSchema } } },
+      {
+        schema: {
+          summary: "Add a class with its form teacher",
+          body: createClassRequestSchema,
+          response: { 201: schoolClassSchema, ...WRITE_ERROR_RESPONSES },
+        },
+      },
       handlers.addClass,
     )
     app.get(
       CLASSES_PATH,
-      { schema: { response: { 200: classListResponseSchema } } },
+      {
+        schema: {
+          summary: "List classes in the order they were added",
+          response: { 200: classListResponseSchema, ...READ_ERROR_RESPONSES },
+        },
+      },
       handlers.listClasses,
     )
     registerMethodNotAllowed(app, CLASSES_PATH, ["GET", "POST"])

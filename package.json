@@ -18,7 +18,8 @@
     "test:unit": "vitest run --project \"unit:*\"",
     "test:component": "vitest run --project component:web --passWithNoTests",
     "test:integration": "vitest run --project integration:api",
-    "db:migrate": "pnpm -F @school-portal/api db:migrate"
+    "db:migrate": "pnpm -F @school-portal/api db:migrate",
+    "openapi:write": "pnpm -F @school-portal/api openapi:write"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

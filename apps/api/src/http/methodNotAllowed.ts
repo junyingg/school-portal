@@ -19,6 +19,7 @@ export function registerMethodNotAllowed(
   app.route({
     method: UNSUPPORTED_METHODS,
     url,
+    schema: { hide: true },
     handler: (_request, reply) =>
       reply
         .status(HTTP_METHOD_NOT_ALLOWED)

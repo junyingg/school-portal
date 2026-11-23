@@ -13,6 +13,7 @@ export {
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
   unknownTeacherEmailMessage,
 } from "./errorMessages.ts"
+export { errorResponseSchema, type ErrorResponse } from "./errorResponse.ts"
 export {
   SPEC_CLASSES,
   SPEC_CREATE_CLASS_REQUEST,
