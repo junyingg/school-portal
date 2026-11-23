@@ -7,3 +7,24 @@ export {
   NOT_FOUND_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
 } from "./errorMessages.ts"
+export { SPEC_CREATE_TEACHER_REQUEST, SPEC_TEACHERS } from "./examples.ts"
+export {
+  CLASS_NAME_MAX_LENGTH,
+  CONTACT_NUMBER_MESSAGE,
+  CONTACT_NUMBER_PATTERN,
+  CONTROL_CHARACTER_PATTERN,
+  EMAIL_MAX_LENGTH,
+  LEVEL_NOT_LISTED_MESSAGE,
+  NAME_MAX_LENGTH,
+  SIMPLE_EMAIL_PATTERN,
+  SUBJECT_NOT_LISTED_MESSAGE,
+} from "./fieldRules.ts"
+export { CLASS_LEVELS, SUBJECTS, type ClassLevel, type Subject } from "./optionLists.ts"
+export {
+  createTeacherRequestSchema,
+  teacherListResponseSchema,
+  teacherSchema,
+  type CreateTeacherRequest,
+  type Teacher,
+  type TeacherListResponse,
+} from "./teacher.ts"
