@@ -1,4 +1,4 @@
-import { SPEC_TEACHERS } from "@school-portal/contract"
+import { SPEC_CREATE_CLASS_REQUEST, SPEC_TEACHERS } from "@school-portal/contract"
 import type { LightMyRequestResponse } from "fastify"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { buildTestApp, type TestApp } from "./support/buildTestApp.ts"
@@ -7,6 +7,7 @@ import {
   JSON_CONTENT_TYPE,
   TEACHERS_PATH,
   getJson,
+  postJson,
   postRaw,
 } from "./support/requests.ts"
 import { resetDatabase } from "./support/resetDatabase.ts"
@@ -127,5 +128,34 @@ describe("unknown route", () => {
     const response = await getJson(testApp.app, "/api/nope")
 
     expectJsonError(response, 404, "Not found")
+  })
+})
+
+describe.each(POST_PATHS)("unsupported methods on %s", (path) => {
+  it.each(["PUT", "PATCH", "DELETE"] as const)(
+    "replies 405 to %s with an Allow header",
+    async (method) => {
+      const response = await testApp.app.inject({ method, url: path })
+
+      expectJsonError(response, 405, "Method not allowed")
+      expect(response.headers.allow).toBe("GET, HEAD, POST")
+    },
+  )
+})
+
+describe("trailing slash", () => {
+  it("serves GET /api/teachers/", async () => {
+    const response = await getJson(testApp.app, `${TEACHERS_PATH}/`)
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toStrictEqual({ data: [] })
+  })
+
+  it("serves POST /api/classes/", async () => {
+    await postJson(testApp.app, TEACHERS_PATH, MARY)
+
+    const response = await postJson(testApp.app, `${CLASSES_PATH}/`, SPEC_CREATE_CLASS_REQUEST)
+
+    expect(response.statusCode).toBe(201)
   })
 })
