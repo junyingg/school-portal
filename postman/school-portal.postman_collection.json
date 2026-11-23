@@ -68,8 +68,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             }
           }
         }
@@ -108,8 +113,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -124,7 +134,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 201\", () => pm.response.to.have.status(201));"]
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));"
+                ]
               }
             }
           ],
@@ -138,8 +150,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -154,7 +171,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 201\", () => pm.response.to.have.status(201));"]
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));"
+                ]
               }
             }
           ],
@@ -168,8 +187,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -204,8 +228,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             }
           }
         }
@@ -238,8 +267,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -254,7 +288,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
               }
             }
           ],
@@ -268,8 +304,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -284,7 +325,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
               }
             }
           ],
@@ -298,8 +341,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -314,7 +362,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
               }
             }
           ],
@@ -328,8 +378,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -361,8 +416,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -377,7 +437,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
               }
             }
           ],
@@ -391,8 +453,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -424,8 +491,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -457,8 +529,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -485,8 +562,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             }
           }
         },
@@ -514,8 +596,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -558,8 +645,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -602,8 +694,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -643,8 +740,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -675,8 +777,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             }
           }
         }
@@ -711,8 +818,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -744,8 +856,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -760,7 +877,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
               }
             }
           ],
@@ -774,8 +893,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -807,8 +931,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/classes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "classes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "classes"
+              ]
             },
             "body": {
               "mode": "raw",
@@ -828,7 +957,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 404\", () => pm.response.to.have.status(404));"]
+                "exec": [
+                  "pm.test(\"status is 404\", () => pm.response.to.have.status(404));"
+                ]
               }
             }
           ],
@@ -837,8 +968,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/nope",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "nope"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nope"
+              ]
             }
           }
         },
@@ -861,8 +997,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/teachers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
             }
           }
         },
@@ -873,7 +1014,9 @@
               "listen": "test",
               "script": {
                 "type": "text/javascript",
-                "exec": ["pm.test(\"status is 200\", () => pm.response.to.have.status(200));"]
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ],
@@ -882,8 +1025,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/teachers/",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "teachers", ""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                ""
+              ]
             }
           }
         }
@@ -897,55 +1046,55 @@
     },
     {
       "key": "teacherSchema",
-      "value": ""
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"subject\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"},\"contactNumber\":{\"type\":\"string\"}},\"required\":[\"name\",\"subject\",\"email\",\"contactNumber\"],\"additionalProperties\":false}"
     },
     {
       "key": "teacherListSchema",
-      "value": ""
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"subject\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"},\"contactNumber\":{\"type\":\"string\"}},\"required\":[\"name\",\"subject\",\"email\",\"contactNumber\"],\"additionalProperties\":false}}},\"required\":[\"data\"],\"additionalProperties\":false}"
     },
     {
       "key": "classSchema",
-      "value": ""
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},\"required\":[\"name\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}"
     },
     {
       "key": "classListSchema",
-      "value": ""
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},\"required\":[\"name\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}}},\"required\":[\"data\"],\"additionalProperties\":false}"
     },
     {
       "key": "errorSchema",
-      "value": ""
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"error\":{\"type\":\"string\"}},\"required\":[\"error\"],\"additionalProperties\":false}"
     },
     {
       "key": "teacherEmailTakenMessage",
-      "value": ""
+      "value": "A teacher with this email already exists"
     },
     {
       "key": "formTeacherTakenMessage",
-      "value": ""
+      "value": "Teacher is already the form teacher of another class"
     },
     {
       "key": "invalidJsonMessage",
-      "value": ""
+      "value": "Request body must be valid JSON"
     },
     {
       "key": "notAnObjectMessage",
-      "value": ""
+      "value": "Request body must be a JSON object"
     },
     {
       "key": "unsupportedMediaTypeMessage",
-      "value": ""
+      "value": "Content-Type must be application/json"
     },
     {
       "key": "bodyTooLargeMessage",
-      "value": ""
+      "value": "Request body too large"
     },
     {
       "key": "subjectNotListedMessage",
-      "value": ""
+      "value": "subject must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education"
     },
     {
       "key": "levelNotListedMessage",
-      "value": ""
+      "value": "level must be one of: Primary 1, Primary 2, Primary 3, Primary 4, Primary 5, Primary 6"
     }
   ]
 }

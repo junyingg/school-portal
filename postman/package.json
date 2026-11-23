@@ -5,9 +5,14 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "test:contract": "newman run school-portal.postman_collection.json -e local.postman_environment.json --reporters cli,junit --reporter-junit-export reports/newman.xml --timeout-request 5000"
+    "test:contract": "newman run school-portal.postman_collection.json -e local.postman_environment.json --reporters cli,junit --reporter-junit-export reports/newman.xml --timeout-request 5000",
+    "sync": "node --conditions=@school-portal/source scripts/syncSchemas.ts"
   },
   "devDependencies": {
     "newman": "6.2.3"
+  },
+  "dependencies": {
+    "@school-portal/contract": "workspace:*",
+    "zod": "4.6.7"
   }
 }
