@@ -32,11 +32,12 @@ function bodyValidationError(input: unknown, repeat = 1) {
   if (!Array.isArray(issues)) {
     throw new Error("expected the input to fail validation")
   }
+  const validationIssues: unknown[] = issues
   return {
     statusCode: 400,
     code: "FST_ERR_VALIDATION",
     validationContext: "body",
-    validation: Array.from({ length: repeat }, () => issues).flat(),
+    validation: Array.from({ length: repeat }, () => validationIssues).flat(),
   }
 }
 

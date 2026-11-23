@@ -150,7 +150,7 @@ describe("POST /api/teachers", () => {
   })
 
   it("replies 500 when the result breaks the response schema", async () => {
-    const { contactNumber: _dropped, ...incompleteTeacher } = MARY
+    const incompleteTeacher = { name: MARY.name, subject: MARY.subject, email: MARY.email }
     const brokenService = fakeTeacherService(() =>
       Promise.resolve(incompleteTeacher as unknown as Teacher),
     )
