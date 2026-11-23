@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { afterEach } from "vitest"
+import { setupMswServer } from "./msw/server.ts"
 
 function unmatchedMediaQuery(query: string): MediaQueryList {
   return {
@@ -31,6 +32,8 @@ class NoopResizeObserver implements ResizeObserver {
 
 window.matchMedia = unmatchedMediaQuery
 window.ResizeObserver = NoopResizeObserver
+
+setupMswServer()
 
 afterEach(() => {
   cleanup()
