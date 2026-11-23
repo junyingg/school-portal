@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { BrowserRouter } from "react-router"
 import { ThemeProvider } from "./components/ui/index.ts"
+import { AppRoutes } from "./routes.tsx"
 
 const queryClient = new QueryClient()
 
@@ -9,7 +10,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          <h1>School Portal</h1>
+          <AppRoutes />
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

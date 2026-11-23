@@ -16,7 +16,7 @@
     "format:check": "prettier --check .",
     "test": "pnpm test:unit && pnpm test:component",
     "test:unit": "vitest run --project \"unit:*\"",
-    "test:component": "vitest run --project component:web --passWithNoTests",
+    "test:component": "vitest run --project component:web",
     "test:integration": "vitest run --project integration:api",
     "db:migrate": "pnpm -F @school-portal/api db:migrate",
     "openapi:write": "pnpm -F @school-portal/api openapi:write"
