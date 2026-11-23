@@ -12,11 +12,11 @@ import {
   networkError,
   TEACHERS_URL,
 } from "../test/msw/handlers.ts"
-import { server, useMswServer } from "../test/msw/server.ts"
+import { server, setupMswServer } from "../test/msw/server.ts"
 import { ApiError } from "./ApiError.ts"
 import { getJson, postJson } from "./apiClient.ts"
 
-useMswServer()
+setupMswServer()
 
 const [HANNAH] = designTeachers
 const GENERIC_MESSAGE = "Something went wrong. Please try again."

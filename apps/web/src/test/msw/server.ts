@@ -15,7 +15,7 @@ server.events.on("request:start", ({ request }) => {
   requestLog.push({ method: request.method, pathname: new URL(request.url).pathname })
 })
 
-export function useMswServer(): void {
+export function setupMswServer(): void {
   beforeAll(() => {
     server.listen({ onUnhandledFrame: "error" })
   })
