@@ -1,0 +1,951 @@
+{
+  "info": {
+    "name": "School Portal API",
+    "description": "Black-box contract tests for the four School Portal endpoints, run through nginx.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get(\"runId\")) {",
+          "  pm.collectionVariables.set(\"runId\", `${Date.now()}${Math.floor(Math.random() * 1000)}`);",
+          "}",
+          "const runId = pm.collectionVariables.get(\"runId\");",
+          "pm.collectionVariables.set(\"maryEmail\", `mary.${runId}@example.com`);",
+          "pm.collectionVariables.set(\"maryEmailUpperCase\", `MARY.${runId}@EXAMPLE.COM`);",
+          "pm.collectionVariables.set(\"kenEmail\", `ken.${runId}@example.com`);",
+          "pm.collectionVariables.set(\"otherEmail\", `other.${runId}@example.com`);",
+          "pm.collectionVariables.set(\"nobodyEmail\", `nobody.${runId}@example.com`);",
+          "pm.collectionVariables.set(\"className\", `Class ${runId}A`);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"responds with UTF-8 JSON\", () => {",
+          "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.eql(\"application/json; charset=utf-8\");",
+          "});",
+          "pm.test(\"exposes no internal fields\", () => {",
+          "  const text = pm.response.text();",
+          "  pm.expect(text).to.not.include('\"id\"');",
+          "  pm.expect(text).to.not.include(\"createdAt\");",
+          "});",
+          "if (pm.response.code >= 400) {",
+          "  pm.test(\"matches errorSchema\", () => {",
+          "    pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"errorSchema\")));",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Smoke",
+      "item": [
+        {
+          "name": "GET /api/teachers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"matches teacherListSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"teacherListSchema\"))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teachers",
+      "item": [
+        {
+          "name": "POST Mary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"matches teacherSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"teacherSchema\"))));",
+                  "pm.test(\"returns the teacher as sent\", () => {",
+                  "  pm.expect(pm.response.json()).to.eql({ name: \"Mary\", subject: \"Mathematics\", email: pm.collectionVariables.get(\"maryEmail\"), contactNumber: \"68129414\" });",
+                  "});",
+                  "pm.test(\"the teacher schema rejects an extra key\", () => {",
+                  "  pm.expect({ ...pm.response.json(), id: 1 }).to.not.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"teacherSchema\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{maryEmail}}\",\"contactNumber\":\"68129414\"}"
+            }
+          }
+        },
+        {
+          "name": "POST Ken",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 201\", () => pm.response.to.have.status(201));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Ken\",\"subject\":\"Mother Tongue Language\",\"email\":\"{{kenEmail}}\",\"contactNumber\":\"61824191\"}"
+            }
+          }
+        },
+        {
+          "name": "POST a contact number that does not start with 6",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 201\", () => pm.response.to.have.status(201));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Other\",\"subject\":\"Science\",\"email\":\"{{otherEmail}}\",\"contactNumber\":\"91234567\"}"
+            }
+          }
+        },
+        {
+          "name": "GET list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"matches teacherListSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"teacherListSchema\"))));",
+                  "const emails = pm.response.json().data.map((teacher) => teacher.email);",
+                  "pm.test(\"lists Mary before Ken\", () => {",
+                  "  pm.expect(emails.indexOf(pm.collectionVariables.get(\"maryEmail\"))).to.be.below(emails.indexOf(pm.collectionVariables.get(\"kenEmail\")));",
+                  "  pm.expect(emails.indexOf(pm.collectionVariables.get(\"maryEmail\"))).to.be.at.least(0);",
+                  "});",
+                  "pm.test(\"each teacher has exactly four keys\", () => {",
+                  "  pm.response.json().data.forEach((teacher) => pm.expect(Object.keys(teacher)).to.have.lengthOf(4));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teacher errors",
+      "item": [
+        {
+          "name": "POST Mary's email in upper case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"error is teacherEmailTakenMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"teacherEmailTakenMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{maryEmailUpperCase}}\",\"contactNumber\":\"68129414\"}"
+            }
+          }
+        },
+        {
+          "name": "POST an empty object",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "POST an email with a space",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"a b@c.com\",\"contactNumber\":\"68129414\"}"
+            }
+          }
+        },
+        {
+          "name": "POST a contact number with a space",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"6123 4567\"}"
+            }
+          }
+        },
+        {
+          "name": "POST an unlisted subject",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is subjectNotListedMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"subjectNotListedMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Chemistry\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"68129414\"}"
+            }
+          }
+        },
+        {
+          "name": "POST a numeric contact number",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":68129414}"
+            }
+          }
+        },
+        {
+          "name": "POST malformed JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is invalidJsonMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"invalidJsonMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":"
+            }
+          }
+        },
+        {
+          "name": "POST an array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is notAnObjectMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"notAnObjectMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[]"
+            }
+          }
+        },
+        {
+          "name": "POST with no body and no Content-Type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is notAnObjectMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"notAnObjectMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            }
+          }
+        },
+        {
+          "name": "POST as text/plain",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 415\", () => pm.response.to.have.status(415));",
+                  "pm.test(\"error is unsupportedMediaTypeMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"unsupportedMediaTypeMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "name=Mary"
+            }
+          }
+        },
+        {
+          "name": "POST a body over 16 KiB",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const SIXTEEN_KIB_PLUS_ONE = 16 * 1024 + 1;",
+                  "const EMPTY_NAME_OBJECT_LENGTH = '{\"name\":\"\"}'.length;",
+                  "pm.variables.set(\"bigBody\", JSON.stringify({ name: \"x\".repeat(SIXTEEN_KIB_PLUS_ONE - EMPTY_NAME_OBJECT_LENGTH) }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 413\", () => pm.response.to.have.status(413));",
+                  "pm.test(\"error is bodyTooLargeMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"bodyTooLargeMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{{bigBody}}"
+            }
+          }
+        },
+        {
+          "name": "POST a body over 1 MiB",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const ONE_MIB_PLUS_ONE = 1024 * 1024 + 1;",
+                  "const EMPTY_NAME_OBJECT_LENGTH = '{\"name\":\"\"}'.length;",
+                  "pm.variables.set(\"hugeBody\", JSON.stringify({ name: \"x\".repeat(ONE_MIB_PLUS_ONE - EMPTY_NAME_OBJECT_LENGTH) }));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 413\", () => pm.response.to.have.status(413));",
+                  "pm.test(\"error is bodyTooLargeMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"bodyTooLargeMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{{hugeBody}}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Classes",
+      "item": [
+        {
+          "name": "POST a class for Mary by upper-case email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"matches classSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"classSchema\"))));",
+                  "pm.test(\"names only the form teacher\", () => {",
+                  "  pm.expect(pm.response.json().formTeacher).to.eql({ name: \"Mary\" });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"level\":\"Primary 1\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{maryEmailUpperCase}}\"}"
+            }
+          }
+        },
+        {
+          "name": "GET list",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"matches classListSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"classListSchema\"))));",
+                  "pm.test(\"contains the new class\", () => {",
+                  "  const names = pm.response.json().data.map((schoolClass) => schoolClass.name);",
+                  "  pm.expect(names).to.include(pm.collectionVariables.get(\"className\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Class errors",
+      "item": [
+        {
+          "name": "POST an unknown teacher email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"names the unknown email\", () => {",
+                  "  pm.expect(pm.response.json().error).to.include(pm.collectionVariables.get(\"nobodyEmail\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"level\":\"Primary 1\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{nobodyEmail}}\"}"
+            }
+          }
+        },
+        {
+          "name": "POST the same class again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"error is formTeacherTakenMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"formTeacherTakenMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"level\":\"Primary 1\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{maryEmailUpperCase}}\"}"
+            }
+          }
+        },
+        {
+          "name": "POST without teacherEmail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 400\", () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"level\":\"Primary 1\",\"name\":\"{{className}}\"}"
+            }
+          }
+        },
+        {
+          "name": "POST an unlisted level",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is levelNotListedMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"levelNotListedMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/classes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "classes"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"level\":\"Secondary 1\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{kenEmail}}\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Routing",
+      "item": [
+        {
+          "name": "GET an unknown route",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 404\", () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nope",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "nope"]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/teachers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 405\", () => pm.response.to.have.status(405));",
+                  "pm.test(\"allows POST\", () => pm.expect(pm.response.headers.get(\"Allow\")).to.include(\"POST\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers"]
+            }
+          }
+        },
+        {
+          "name": "GET with a trailing slash",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test(\"status is 200\", () => pm.response.to.have.status(200));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "teachers", ""]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "teacherSchema",
+      "value": ""
+    },
+    {
+      "key": "teacherListSchema",
+      "value": ""
+    },
+    {
+      "key": "classSchema",
+      "value": ""
+    },
+    {
+      "key": "classListSchema",
+      "value": ""
+    },
+    {
+      "key": "errorSchema",
+      "value": ""
+    },
+    {
+      "key": "teacherEmailTakenMessage",
+      "value": ""
+    },
+    {
+      "key": "formTeacherTakenMessage",
+      "value": ""
+    },
+    {
+      "key": "invalidJsonMessage",
+      "value": ""
+    },
+    {
+      "key": "notAnObjectMessage",
+      "value": ""
+    },
+    {
+      "key": "unsupportedMediaTypeMessage",
+      "value": ""
+    },
+    {
+      "key": "bodyTooLargeMessage",
+      "value": ""
+    },
+    {
+      "key": "subjectNotListedMessage",
+      "value": ""
+    },
+    {
+      "key": "levelNotListedMessage",
+      "value": ""
+    }
+  ]
+}
