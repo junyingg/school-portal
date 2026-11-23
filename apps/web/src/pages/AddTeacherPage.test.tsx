@@ -1,10 +1,26 @@
+import { CONTACT_NUMBER_MESSAGE, TEACHER_EMAIL_TAKEN_MESSAGE } from "@school-portal/contract"
 import { screen, within } from "@testing-library/react"
 import { userEvent, type UserEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { AppRoutes } from "../routes.tsx"
-import { createTeacherPending, TEACHERS_URL } from "../test/msw/handlers.ts"
+import {
+  createTeacherFails,
+  createTeacherPending,
+  htmlBadGateway,
+  networkError,
+  TEACHERS_URL,
+} from "../test/msw/handlers.ts"
 import { requestLog, server } from "../test/msw/server.ts"
 import { renderWithProviders } from "../test/renderWithProviders.tsx"
+
+const GENERIC_MESSAGE = "Something went wrong. Please try again."
+
+function expectMaryKept() {
+  expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Mary")
+  expect(screen.getByRole("textbox", { name: "Email Address" })).toHaveValue(
+    "teachermary@gmail.com",
+  )
+}
 
 function renderAddTeacherPage() {
   renderWithProviders(<AppRoutes />, { route: "/teachers/new" })
@@ -78,5 +94,50 @@ describe("AddTeacherPage", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Teachers" })).toBeInTheDocument()
     expect(teacherPosts()).toHaveLength(0)
+  })
+
+  it("shows a duplicate email under Email Address, focused, keeping the values", async () => {
+    server.use(createTeacherFails(409, TEACHER_EMAIL_TAKEN_MESSAGE))
+    const user = userEvent.setup()
+    renderAddTeacherPage()
+
+    await fillMary(user)
+    await user.click(screen.getByRole("button", { name: "Add Teacher" }))
+
+    const email = screen.getByRole("textbox", { name: "Email Address" })
+    expect(await screen.findByText("This email address is already registered.")).toBeInTheDocument()
+    expect(email).toHaveAccessibleDescription("This email address is already registered.")
+    expect(email).toHaveFocus()
+    expectMaryKept()
+  })
+
+  it.each([
+    [400, CONTACT_NUMBER_MESSAGE],
+    [500, "Internal server error"],
+  ])("shows a %i in the banner with the server's message", async (status, message) => {
+    server.use(createTeacherFails(status, message))
+    const user = userEvent.setup()
+    renderAddTeacherPage()
+
+    await fillMary(user)
+    await user.click(screen.getByRole("button", { name: "Add Teacher" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    expectMaryKept()
+  })
+
+  it.each([
+    ["a network failure", networkError("post", TEACHERS_URL)],
+    ["an HTML bad gateway", htmlBadGateway("post", TEACHERS_URL)],
+  ])("shows %s in the banner with the generic message", async (_case, handler) => {
+    server.use(handler)
+    const user = userEvent.setup()
+    renderAddTeacherPage()
+
+    await fillMary(user)
+    await user.click(screen.getByRole("button", { name: "Add Teacher" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(GENERIC_MESSAGE)
+    expectMaryKept()
   })
 })
