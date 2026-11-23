@@ -1,0 +1,76 @@
+import { errorCodes } from "fastify"
+import { describe, expect, it } from "vitest"
+import { mapErrorToReply, type ErrorReply } from "./errorMapper.ts"
+
+interface MappingCase {
+  readonly description: string
+  readonly input: unknown
+  readonly expected: ErrorReply
+}
+
+function clientFault(statusCode: number, message: string): ErrorReply {
+  return { statusCode, message, isServerFault: false }
+}
+
+const SERVER_FAULT: ErrorReply = {
+  statusCode: 500,
+  message: "Internal server error",
+  isServerFault: true,
+}
+
+const CASES: MappingCase[] = [
+  { description: "a thrown string", input: "boom", expected: SERVER_FAULT },
+  { description: "undefined", input: undefined, expected: SERVER_FAULT },
+  {
+    description: "an empty JSON body",
+    input: new errorCodes.FST_ERR_CTP_EMPTY_JSON_BODY(),
+    expected: clientFault(400, "Request body must be a JSON object"),
+  },
+  {
+    description: "malformed JSON",
+    input: new errorCodes.FST_ERR_CTP_INVALID_JSON_BODY(),
+    expected: clientFault(400, "Request body must be valid JSON"),
+  },
+  {
+    description: "a Content-Length mismatch",
+    input: new errorCodes.FST_ERR_CTP_INVALID_CONTENT_LENGTH(),
+    expected: clientFault(400, "Request body size did not match Content-Length"),
+  },
+  {
+    description: "a non-JSON media type",
+    input: new errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE(),
+    expected: clientFault(415, "Content-Type must be application/json"),
+  },
+  {
+    description: "a body over the limit",
+    input: new errorCodes.FST_ERR_CTP_BODY_TOO_LARGE(),
+    expected: clientFault(413, "Request body too large"),
+  },
+  {
+    description: "another 404 without leaking its message",
+    input: { statusCode: 404, message: "secret" },
+    expected: clientFault(404, "Not Found"),
+  },
+  {
+    description: "another 408 without leaking its message",
+    input: { statusCode: 408, message: "secret" },
+    expected: clientFault(408, "Request Timeout"),
+  },
+  {
+    description: "a 4xx with no standard reason phrase",
+    input: { statusCode: 499, message: "secret" },
+    expected: clientFault(499, "Bad Request"),
+  },
+  { description: "a foreign-key violation", input: { code: "23503" }, expected: SERVER_FAULT },
+  {
+    description: "a plain Error",
+    input: new Error("select * from teachers"),
+    expected: SERVER_FAULT,
+  },
+]
+
+describe("mapErrorToReply", () => {
+  it.each(CASES)("maps $description", ({ input, expected }) => {
+    expect(mapErrorToReply(input)).toStrictEqual(expected)
+  })
+})
