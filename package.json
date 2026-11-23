@@ -24,7 +24,8 @@
     "stack:up": "docker compose up --build --wait",
     "stack:down": "docker compose down -v",
     "test:contract": "pnpm -F @school-portal/postman-tests test:contract",
-    "postman:sync": "pnpm -F @school-portal/postman-tests sync"
+    "postman:sync": "pnpm -F @school-portal/postman-tests sync",
+    "test:e2e": "pnpm -F @school-portal/e2e test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

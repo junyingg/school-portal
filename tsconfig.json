@@ -5,6 +5,7 @@
     { "path": "./packages/contract" },
     { "path": "./apps/api" },
     { "path": "./apps/web" },
-    { "path": "./postman" }
+    { "path": "./postman" },
+    { "path": "./e2e" }
   ]
 }
