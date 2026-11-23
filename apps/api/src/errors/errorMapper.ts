@@ -2,6 +2,7 @@ import { STATUS_CODES } from "node:http"
 import {
   BODY_TOO_LARGE_MESSAGE,
   CONTENT_LENGTH_MISMATCH_MESSAGE,
+  FORM_TEACHER_TAKEN_MESSAGE,
   INTERNAL_ERROR_MESSAGE,
   INVALID_JSON_MESSAGE,
   NOT_AN_OBJECT_MESSAGE,
@@ -10,7 +11,8 @@ import {
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
 } from "@school-portal/contract"
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod"
-import { TEACHERS_EMAIL_LOWER_KEY } from "../db/constraintNames.ts"
+import { CLASSES_FORM_TEACHER_ID_KEY, TEACHERS_EMAIL_LOWER_KEY } from "../db/constraintNames.ts"
+import { UnknownTeacherEmailError } from "./domainErrors.ts"
 import { toValidationMessage } from "./validationMessage.ts"
 
 export interface ErrorReply {
@@ -83,9 +85,13 @@ function reasonPhraseFor(statusCode: number): string {
 }
 
 function conflictMessageFor(constraint: string | undefined): string {
-  return constraint === TEACHERS_EMAIL_LOWER_KEY
-    ? TEACHER_EMAIL_TAKEN_MESSAGE
-    : RESOURCE_EXISTS_MESSAGE
+  if (constraint === TEACHERS_EMAIL_LOWER_KEY) {
+    return TEACHER_EMAIL_TAKEN_MESSAGE
+  }
+  if (constraint === CLASSES_FORM_TEACHER_ID_KEY) {
+    return FORM_TEACHER_TAKEN_MESSAGE
+  }
+  return RESOURCE_EXISTS_MESSAGE
 }
 
 export function mapErrorToReply(error: unknown): ErrorReply {
@@ -95,6 +101,10 @@ export function mapErrorToReply(error: unknown): ErrorReply {
 
   if (hasZodFastifySchemaValidationErrors(error)) {
     return clientFault(HTTP_BAD_REQUEST, toValidationMessage(error.validation))
+  }
+
+  if (error instanceof UnknownTeacherEmailError) {
+    return clientFault(HTTP_BAD_REQUEST, error.message)
   }
 
   const code = errorCodeOf(error)
