@@ -1,4 +1,8 @@
 {
   "files": [],
-  "references": [{ "path": "./tsconfig.tooling.json" }, { "path": "./packages/contract" }]
+  "references": [
+    { "path": "./tsconfig.tooling.json" },
+    { "path": "./packages/contract" },
+    { "path": "./apps/api" }
+  ]
 }
