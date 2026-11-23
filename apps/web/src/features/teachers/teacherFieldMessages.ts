@@ -23,6 +23,7 @@ export const TEACHER_FIELD_MESSAGES = {
   emailRequired: "This email address is required.",
   emailInvalid: "This email address is invalid.",
   emailTooLong: `This email address must be at most ${EMAIL_MAX_LENGTH} characters.`,
+  emailTaken: "This email address is already registered.",
   contactNumberRequired: "This work contact number is required.",
   contactNumberInvalid: "This work contact number is invalid.",
 } as const

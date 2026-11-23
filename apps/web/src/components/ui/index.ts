@@ -1,6 +1,7 @@
 export { Button, type ButtonVariant } from "./Button.tsx"
 export { Card } from "./Card.tsx"
 export { DataTable, type DataColumn } from "./DataTable.tsx"
+export { ErrorBanner } from "./ErrorBanner.tsx"
 export { FormField } from "./FormField.tsx"
 export { FormLayout } from "./FormLayout.tsx"
 export { AddIcon, BackIcon, GraduationCapIcon } from "./icons.tsx"

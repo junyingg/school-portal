@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SUBJECTS, type CreateTeacherRequest } from "@school-portal/contract"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { ControlledSelect } from "../../components/ControlledSelect.tsx"
 import { ControlledTextInput } from "../../components/ControlledTextInput.tsx"
 import { FormActions } from "../../components/FormActions.tsx"
-import { Card, FormLayout } from "../../components/ui/index.ts"
+import { Card, ErrorBanner, FormLayout } from "../../components/ui/index.ts"
 import {
   TEACHER_FIELD_LABELS as LABELS,
   TEACHER_FIELD_PLACEHOLDERS as PLACEHOLDERS,
@@ -26,14 +27,21 @@ export interface TeacherFormProps {
   readonly onBack: () => void
   readonly isSubmitting: boolean
   readonly serverError?: TeacherServerError | undefined
+  readonly bannerMessage?: string | undefined
 }
 
 const SUBJECT_OPTIONS = SUBJECTS.map((subject) => ({ label: subject, value: subject }))
 
 const EMPTY_TEACHER = { name: "", email: "", contactNumber: "" }
 
-export function TeacherForm({ onSubmit, onBack, isSubmitting, serverError }: TeacherFormProps) {
-  const { control, handleSubmit, formState } = useForm<
+export function TeacherForm({
+  onSubmit,
+  onBack,
+  isSubmitting,
+  serverError,
+  bannerMessage,
+}: TeacherFormProps) {
+  const { control, handleSubmit, formState, setFocus } = useForm<
     TeacherFormInput,
     unknown,
     TeacherFormOutput
@@ -41,6 +49,14 @@ export function TeacherForm({ onSubmit, onBack, isSubmitting, serverError }: Tea
     resolver: zodResolver(teacherFormSchema),
     defaultValues: EMPTY_TEACHER,
   })
+
+  const serverErrorField = serverError?.field
+  const serverErrorMessage = serverError?.message
+  useEffect(() => {
+    if (serverErrorField !== undefined) {
+      setFocus(serverErrorField)
+    }
+  }, [serverErrorField, serverErrorMessage, setFocus])
 
   function serverMessageFor(field: TeacherFieldName): string | undefined {
     return serverError?.field === field ? serverError.message : undefined
@@ -86,6 +102,7 @@ export function TeacherForm({ onSubmit, onBack, isSubmitting, serverError }: Tea
           serverMessage={serverMessageFor("contactNumber")}
         />
       </Card>
+      {bannerMessage === undefined ? null : <ErrorBanner message={bannerMessage} />}
       <FormActions
         submitLabel="Add Teacher"
         isSubmitting={isSubmitting || formState.isSubmitting}
