@@ -1,4 +1,6 @@
+import { createTeacherRequestSchema } from "@school-portal/contract"
 import { errorCodes } from "fastify"
+import { validatorCompiler } from "fastify-type-provider-zod"
 import { describe, expect, it } from "vitest"
 import { mapErrorToReply, type ErrorReply } from "./errorMapper.ts"
 
@@ -18,6 +20,43 @@ const SERVER_FAULT: ErrorReply = {
   isServerFault: true,
 }
 
+const validateTeacherBody = validatorCompiler({
+  schema: createTeacherRequestSchema,
+  method: "POST",
+  url: "/api/teachers",
+  httpPart: "body",
+}) as (input: unknown) => { error?: unknown }
+
+function bodyValidationError(input: unknown, repeat = 1) {
+  const { error: issues } = validateTeacherBody(input)
+  if (!Array.isArray(issues)) {
+    throw new Error("expected the input to fail validation")
+  }
+  return {
+    statusCode: 400,
+    code: "FST_ERR_VALIDATION",
+    validationContext: "body",
+    validation: Array.from({ length: repeat }, () => issues).flat(),
+  }
+}
+
+function uniqueViolation(constraint: string) {
+  return Object.assign(
+    new Error(`duplicate key value violates unique constraint "${constraint}"`),
+    {
+      code: "23505",
+      constraint,
+    },
+  )
+}
+
+const INVALID_NAME_AND_EMAIL = {
+  name: "",
+  subject: "Mathematics",
+  email: "mary",
+  contactNumber: "61234567",
+}
+
 const CASES: MappingCase[] = [
   { description: "a thrown string", input: "boom", expected: SERVER_FAULT },
   { description: "undefined", input: undefined, expected: SERVER_FAULT },
@@ -25,6 +64,31 @@ const CASES: MappingCase[] = [
     description: "an empty JSON body",
     input: new errorCodes.FST_ERR_CTP_EMPTY_JSON_BODY(),
     expected: clientFault(400, "Request body must be a JSON object"),
+  },
+  {
+    description: "a body that is not an object",
+    input: bodyValidationError([]),
+    expected: clientFault(400, "Request body must be a JSON object"),
+  },
+  {
+    description: "field validation issues joined in order",
+    input: bodyValidationError(INVALID_NAME_AND_EMAIL),
+    expected: clientFault(400, "name is required; email must be a valid email address"),
+  },
+  {
+    description: "repeated validation messages only once",
+    input: bodyValidationError(INVALID_NAME_AND_EMAIL, 2),
+    expected: clientFault(400, "name is required; email must be a valid email address"),
+  },
+  {
+    description: "a duplicate teacher email",
+    input: uniqueViolation("teachers_email_lower_key"),
+    expected: clientFault(409, "A teacher with this email already exists"),
+  },
+  {
+    description: "an unknown unique constraint",
+    input: uniqueViolation("other_key"),
+    expected: clientFault(409, "Resource already exists"),
   },
   {
     description: "malformed JSON",

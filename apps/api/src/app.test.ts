@@ -1,17 +1,32 @@
+import { SPEC_TEACHERS, type Teacher } from "@school-portal/contract"
 import type { FastifyInstance, FastifyPluginCallback } from "fastify"
-import { describe, expect, it, onTestFinished } from "vitest"
-import { buildApp, type AppDependencies } from "./app.ts"
+import { describe, expect, it, onTestFinished, vi } from "vitest"
+import { buildApp } from "./app.ts"
+import type { AppServices } from "./composition.ts"
+import type { TeacherService } from "./modules/teachers/teacherService.ts"
 
-const TEST_DEPENDENCIES: AppDependencies = {
-  config: { logLevel: "silent" },
-}
+const [MARY] = SPEC_TEACHERS
 
 const LEAKY_ERROR_MESSAGE = "select * from teachers where password = 'hunter2'"
 
-async function startApp(): Promise<FastifyInstance> {
-  const app = await buildApp(TEST_DEPENDENCIES)
+function fakeTeacherService(
+  registerTeacher: TeacherService["registerTeacher"] = () => Promise.resolve(MARY),
+): TeacherService {
+  return { registerTeacher }
+}
+
+function fakeServices(overrides: Partial<AppServices> = {}): AppServices {
+  return { teacherService: fakeTeacherService(), ...overrides }
+}
+
+async function startApp(services: AppServices = fakeServices()): Promise<FastifyInstance> {
+  const app = await buildApp({ config: { logLevel: "silent" }, services })
   onTestFinished(() => app.close())
   return app
+}
+
+function postTeacher(app: FastifyInstance, body: unknown) {
+  return app.inject({ method: "POST", url: "/api/teachers", payload: body as object })
 }
 
 const routeThatThrows: FastifyPluginCallback = (plugin, _options, done) => {
@@ -108,5 +123,42 @@ describe("POST body handling", () => {
 
     expect(response.statusCode).toBe(400)
     expect(response.json()).toStrictEqual({ error: "Request body must be valid JSON" })
+  })
+})
+
+describe("POST /api/teachers", () => {
+  it("passes the trimmed request to the service without unknown fields", async () => {
+    const registerTeacher = vi.fn<TeacherService["registerTeacher"]>().mockResolvedValue(MARY)
+    const app = await startApp(
+      fakeServices({ teacherService: fakeTeacherService(registerTeacher) }),
+    )
+
+    const response = await postTeacher(app, { ...MARY, name: " Mary ", id: 9 })
+
+    expect(response.statusCode).toBe(201)
+    expect(registerTeacher).toHaveBeenCalledExactlyOnceWith(MARY)
+  })
+
+  it("hides a service failure behind a 500", async () => {
+    const failingService = fakeTeacherService(() => Promise.reject(new Error(LEAKY_ERROR_MESSAGE)))
+    const app = await startApp(fakeServices({ teacherService: failingService }))
+
+    const response = await postTeacher(app, MARY)
+
+    expect(response.statusCode).toBe(500)
+    expect(response.json()).toStrictEqual({ error: "Internal server error" })
+  })
+
+  it("replies 500 when the result breaks the response schema", async () => {
+    const { contactNumber: _dropped, ...incompleteTeacher } = MARY
+    const brokenService = fakeTeacherService(() =>
+      Promise.resolve(incompleteTeacher as unknown as Teacher),
+    )
+    const app = await startApp(fakeServices({ teacherService: brokenService }))
+
+    const response = await postTeacher(app, MARY)
+
+    expect(response.statusCode).toBe(500)
+    expect(response.json()).toStrictEqual({ error: "Internal server error" })
   })
 })
