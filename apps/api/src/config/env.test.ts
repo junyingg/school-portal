@@ -3,13 +3,14 @@ import { loadConfig } from "./env.ts"
 
 const DATABASE_URL = "postgres://school_portal_app:s3cret-password@localhost:5432/school_portal"
 
-const MINIMAL_ENV = {
+const ENV_WITHOUT_DATABASE_URL = {
   NODE_ENV: "production",
   API_HOST: "0.0.0.0",
   API_PORT: "3000",
   LOG_LEVEL: "info",
-  DATABASE_URL,
 }
+
+const MINIMAL_ENV = { ...ENV_WITHOUT_DATABASE_URL, DATABASE_URL }
 
 function configErrorMessage(env: Record<string, string>): string {
   try {
@@ -56,9 +57,7 @@ describe("loadConfig", () => {
   })
 
   it("names a missing DATABASE_URL", () => {
-    const { DATABASE_URL: _omitted, ...envWithoutDatabaseUrl } = MINIMAL_ENV
-
-    expect(configErrorMessage(envWithoutDatabaseUrl)).toContain("DATABASE_URL")
+    expect(configErrorMessage(ENV_WITHOUT_DATABASE_URL)).toContain("DATABASE_URL")
   })
 
   it("names a non-URL DATABASE_URL without echoing its value", () => {

@@ -1,12 +1,11 @@
 import closeWithGrace from "close-with-grace"
 import { buildApp } from "./app.ts"
+import { loadConfig } from "./config/env.ts"
 
-const LISTEN_HOST = "0.0.0.0"
-const LISTEN_PORT = 3000
-const LOG_LEVEL = "info"
 const SHUTDOWN_GRACE_PERIOD_MS = 10_000
 
-const app = await buildApp({ config: { logLevel: LOG_LEVEL } })
+const config = loadConfig(process.env)
+const app = await buildApp({ config })
 
 closeWithGrace({ delay: SHUTDOWN_GRACE_PERIOD_MS }, async ({ err }) => {
   if (err !== undefined) {
@@ -15,4 +14,4 @@ closeWithGrace({ delay: SHUTDOWN_GRACE_PERIOD_MS }, async ({ err }) => {
   await app.close()
 })
 
-await app.listen({ host: LISTEN_HOST, port: LISTEN_PORT })
+await app.listen({ host: config.host, port: config.port })

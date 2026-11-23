@@ -1,12 +1,9 @@
 import { fastify, type FastifyInstance } from "fastify"
+import type { HttpConfig } from "./config/env.ts"
 import { REQUEST_BODY_LIMIT_BYTES } from "./config/limits.ts"
 import { errorHandlerPlugin } from "./errors/errorHandlerPlugin.ts"
 import { healthPlugin } from "./http/healthPlugin.ts"
 import { jsonOnlyPlugin } from "./http/jsonOnlyPlugin.ts"
-
-export interface HttpConfig {
-  readonly logLevel: string
-}
 
 export interface AppDependencies {
   readonly config: HttpConfig
