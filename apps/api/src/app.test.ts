@@ -282,3 +282,40 @@ describe("GET /readyz", () => {
     expect(response.json()).toStrictEqual({ error: "Service unavailable" })
   })
 })
+
+describe("GET /api/teachers", () => {
+  it("wraps the service's teachers in data", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({ method: "GET", url: "/api/teachers" })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toStrictEqual({ data: [MARY] })
+  })
+})
+
+describe("GET /api/classes", () => {
+  it("wraps the service's classes in data", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({ method: "GET", url: "/api/classes" })
+
+    expect(response.statusCode).toBe(200)
+    expect(response.json()).toStrictEqual({ data: [CLASS_1A] })
+  })
+})
+
+describe("POST /api/classes success", () => {
+  it("replies 201 with the created class", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/classes",
+      payload: SPEC_CREATE_CLASS_REQUEST,
+    })
+
+    expect(response.statusCode).toBe(201)
+    expect(response.json()).toStrictEqual(CLASS_1A)
+  })
+})
