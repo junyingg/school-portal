@@ -1,10 +1,10 @@
 import { SPEC_TEACHERS, SUBJECT_NOT_LISTED_MESSAGE } from "@school-portal/contract"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { buildTestApp, type TestApp } from "./support/buildTestApp.ts"
-import { TEACHERS_PATH, aTeacherRequest, postJson } from "./support/requests.ts"
+import { TEACHERS_PATH, aTeacherRequest, getJson, postJson } from "./support/requests.ts"
 import { resetDatabase } from "./support/resetDatabase.ts"
 
-const [MARY] = SPEC_TEACHERS
+const [MARY, KEN] = SPEC_TEACHERS
 
 let testApp: TestApp
 
@@ -95,5 +95,31 @@ describe("POST /api/teachers", () => {
 
     expect(response.statusCode).toBe(201)
     expect(response.json()).toStrictEqual(MARY)
+  })
+})
+
+describe("GET /api/teachers", () => {
+  it("returns an empty data array when no teachers exist", async () => {
+    const response = await getJson(testApp.app, TEACHERS_PATH)
+
+    expect(response.statusCode).toBe(200)
+    expect(response.body).toBe('{"data":[]}')
+  })
+
+  it("lists teachers in insertion order", async () => {
+    await postJson(testApp.app, TEACHERS_PATH, MARY)
+    await postJson(testApp.app, TEACHERS_PATH, KEN)
+
+    const response = await getJson(testApp.app, TEACHERS_PATH)
+
+    expect(response.json()).toStrictEqual({ data: [MARY, KEN] })
+  })
+
+  it("keeps the email casing as sent", async () => {
+    await postJson(testApp.app, TEACHERS_PATH, aTeacherRequest({ email: "TeacherMary@Gmail.com" }))
+
+    const response = await getJson(testApp.app, TEACHERS_PATH)
+
+    expect(response.json()).toStrictEqual({ data: [{ ...MARY, email: "TeacherMary@Gmail.com" }] })
   })
 })

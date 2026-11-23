@@ -12,7 +12,7 @@ const LEAKY_ERROR_MESSAGE = "select * from teachers where password = 'hunter2'"
 function fakeTeacherService(
   registerTeacher: TeacherService["registerTeacher"] = () => Promise.resolve(MARY),
 ): TeacherService {
-  return { registerTeacher }
+  return { registerTeacher, listTeachers: () => Promise.resolve([MARY]) }
 }
 
 function fakeServices(overrides: Partial<AppServices> = {}): AppServices {
