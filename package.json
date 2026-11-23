@@ -20,7 +20,9 @@
     "test:component": "vitest run --project component:web",
     "test:integration": "vitest run --project integration:api",
     "db:migrate": "pnpm -F @school-portal/api db:migrate",
-    "openapi:write": "pnpm -F @school-portal/api openapi:write"
+    "openapi:write": "pnpm -F @school-portal/api openapi:write",
+    "stack:up": "docker compose up --build --wait",
+    "stack:down": "docker compose down -v"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
