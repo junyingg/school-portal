@@ -17,3 +17,15 @@
   outline: 2px solid var(--brand-blue);
   outline-offset: -2px;
 }
+
+@media (max-width: 600px) {
+  .tab {
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .tab {
+    padding: 0 6px;
+  }
+}
