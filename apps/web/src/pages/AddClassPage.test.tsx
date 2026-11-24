@@ -131,7 +131,7 @@ describe("AddClassPage", () => {
     await user.type(screen.getByRole("textbox", { name: "Name" }), "New Teacher")
     await choose(user, "Subject", "Mathematics")
     await user.type(screen.getByRole("textbox", { name: "Email Address" }), "new@example.com")
-    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "91234567")
+    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "61234567")
     await user.click(screen.getByRole("button", { name: "Add Teacher" }))
 
     expect(await screen.findByRole("heading", { level: 1, name: "Add Class" })).toBeInTheDocument()
