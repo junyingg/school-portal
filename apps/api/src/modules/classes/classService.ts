@@ -30,11 +30,11 @@ export function createClassService({
         name: request.name,
         formTeacherId: formTeacher.id,
       })
-      return {
+      return toSchoolClass({
         level: request.level,
         name: request.name,
-        formTeacher: { name: formTeacher.name },
-      }
+        formTeacherName: formTeacher.name,
+      })
     },
 
     async listClasses() {
