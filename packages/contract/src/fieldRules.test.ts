@@ -33,17 +33,21 @@ describe("contactNumberField", () => {
     expect(contactNumberField().parse(value)).toBe(value)
   })
 
-  it("strips all whitespace before matching", () => {
-    expect(contactNumberField().parse(" 6123 4567 ")).toBe("61234567")
-    expect(contactNumberField().parse("6 1 2 3 4 5 6 7")).toBe("61234567")
+  it("trims surrounding spaces", () => {
+    expect(contactNumberField().parse(" 61234567 ")).toBe("61234567")
   })
 
-  it.each(["6123456", "612345678", "6123456a", "6123-4567", "６１２３４５６７"])(
-    "rejects %s",
-    (value) => {
-      expect(issueMessages(contactNumberField(), value)).toEqual([CONTACT_NUMBER_MESSAGE])
-    },
-  )
+  it.each([
+    "6123 4567",
+    "6 1 2 3 4 5 6 7",
+    "6123456",
+    "612345678",
+    "6123456a",
+    "6123-4567",
+    "６１２３４５６７",
+  ])("rejects %s", (value) => {
+    expect(issueMessages(contactNumberField(), value)).toEqual([CONTACT_NUMBER_MESSAGE])
+  })
 
   it("rejects a number", () => {
     expect(issueMessages(contactNumberField(), 61234567)).toEqual([

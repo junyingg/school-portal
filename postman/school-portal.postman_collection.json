@@ -356,7 +356,7 @@
           }
         },
         {
-          "name": "POST a contact number with a hyphen",
+          "name": "POST a contact number with a space",
           "event": [
             {
               "listen": "test",
@@ -388,7 +388,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"6123-4567\"}"
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"6123 4567\"}"
             }
           }
         },

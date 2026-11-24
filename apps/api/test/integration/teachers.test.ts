@@ -76,18 +76,8 @@ describe("POST /api/teachers", () => {
     expect(response.json()).toStrictEqual({ error: SUBJECT_NOT_LISTED_MESSAGE })
   })
 
-  it("accepts a formatted contact number and stores its digits", async () => {
-    const response = await postJson(
-      testApp.app,
-      TEACHERS_PATH,
-      aTeacherRequest({ contactNumber: "6123 4567" }),
-    )
-
-    expect(response.statusCode).toBe(201)
-    expect(response.json()).toMatchObject({ contactNumber: "61234567" })
-  })
-
   it.each([
+    ["6123 4567", "contactNumber must be 8 digits"],
     ["6123-4567", "contactNumber must be 8 digits"],
     [68129414, "contactNumber must be a string"],
   ])("rejects the contact number %j", async (contactNumber, message) => {
