@@ -167,6 +167,18 @@ describe("POST /api/teachers", () => {
     expect(registerTeacher).toHaveBeenCalledExactlyOnceWith(MARY)
   })
 
+  it.each(["name", "email", "contactNumber"])(
+    "reports an array %s as the wrong type only",
+    async (field) => {
+      const app = await startApp()
+
+      const response = await postTeacher(app, { ...MARY, [field]: [] })
+
+      expect(response.statusCode).toBe(400)
+      expect(response.json()).toStrictEqual({ error: `${field} must be a string` })
+    },
+  )
+
   it("hides a service failure behind a 500", async () => {
     const failingService = fakeTeacherService(() => Promise.reject(new Error(LEAKY_ERROR_MESSAGE)))
     const app = await startApp({ services: fakeServices({ teacherService: failingService }) })

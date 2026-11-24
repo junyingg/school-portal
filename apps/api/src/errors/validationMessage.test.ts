@@ -14,6 +14,16 @@ describe("toValidationMessage", () => {
     )
   })
 
+  it("reports only the first message for each field", () => {
+    const issues = [
+      { instancePath: "/email", message: "email must be a string" },
+      { instancePath: "/email", message: "email is required" },
+      { instancePath: "/name", message: "name is required" },
+    ]
+
+    expect(toValidationMessage(issues)).toBe("email must be a string; name is required")
+  })
+
   it("reports a whole-body issue as a non-object body", () => {
     const issues = [
       { instancePath: "/", message: "Invalid input: expected object, received array" },
