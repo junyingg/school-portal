@@ -25,6 +25,17 @@
                     "maxLength": 100
                   },
                   "subject": {
+                    "enum": [
+                      "English Language",
+                      "Mother Tongue Language",
+                      "Mathematics",
+                      "Science",
+                      "Art",
+                      "Music",
+                      "Physical Education",
+                      "Social Studies",
+                      "Character and Citizenship Education"
+                    ],
                     "type": "string",
                     "minLength": 1
                   },
@@ -258,6 +269,14 @@
                 "type": "object",
                 "properties": {
                   "level": {
+                    "enum": [
+                      "Primary 1",
+                      "Primary 2",
+                      "Primary 3",
+                      "Primary 4",
+                      "Primary 5",
+                      "Primary 6"
+                    ],
                     "type": "string",
                     "minLength": 1
                   },

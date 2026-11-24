@@ -52,5 +52,7 @@ export function listedValue<const Values extends readonly [string, ...string[]]>
   values: Values,
   notListedMessage: string,
 ) {
-  return requiredString(field).pipe(z.enum(values, { error: () => notListedMessage }))
+  return requiredString(field)
+    .pipe(z.enum(values, { error: () => notListedMessage }))
+    .meta({ enum: [...values] })
 }
