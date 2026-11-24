@@ -41,7 +41,7 @@ function AddButton({ label, onClick }: AddButtonProps) {
 
 export function ListPage<Item>({ copy, query, onAdd, renderList }: ListPageProps<Item>) {
   const items = query.data ?? []
-  const hasItems = items.length > 0
+  const isEmpty = !query.isPending && !query.isError && items.length === 0
   const addButton = <AddButton label={copy.addLabel} onClick={onAdd} />
 
   function renderCardContent() {
@@ -58,15 +58,15 @@ export function ListPage<Item>({ copy, query, onAdd, renderList }: ListPageProps
         />
       )
     }
-    if (!hasItems) {
-      return <EmptyState message={copy.emptyMessage} />
+    if (isEmpty) {
+      return <EmptyState message={copy.emptyMessage} action={addButton} />
     }
     return renderList(items)
   }
 
   return (
     <>
-      <PageHeader title={copy.title} action={addButton} />
+      <PageHeader title={copy.title} action={isEmpty ? undefined : addButton} />
       <Card label={copy.title} isBusy={query.isPending}>
         {renderCardContent()}
       </Card>
