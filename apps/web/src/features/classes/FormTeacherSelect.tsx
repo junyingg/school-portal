@@ -86,7 +86,7 @@ export function FormTeacherSelect<Values extends FieldValues, Output>({
       options={options}
       serverMessage={serverMessage}
       isLoading={teachers.isPending}
-      emptyContent={
+      popupContent={
         hasNoTeachers && isOpen ? <NoTeachersMessage className={styles["panel"]} /> : undefined
       }
       footnote={footnote()}

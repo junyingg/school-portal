@@ -14,7 +14,7 @@ interface SelectInputProps {
   readonly isInvalid: boolean
   readonly describedBy: string | undefined
   readonly isLoading?: boolean
-  readonly emptyContent?: ReactNode
+  readonly popupContent?: ReactNode
   readonly onChange: (value: string) => void
   readonly onBlur: () => void
   readonly onOpenChange?: (isOpen: boolean) => void
@@ -29,7 +29,7 @@ export function SelectInput({
   isInvalid,
   describedBy,
   isLoading = false,
-  emptyContent,
+  popupContent,
   onChange,
   onBlur,
   onOpenChange,
@@ -52,7 +52,7 @@ export function SelectInput({
       onBlur={onBlur}
       {...(value === undefined ? {} : { value })}
       {...(ref === undefined ? {} : { ref })}
-      {...(emptyContent === undefined ? {} : { notFoundContent: emptyContent })}
+      {...(popupContent === undefined ? {} : { popupRender: () => popupContent })}
       {...(onOpenChange === undefined ? {} : { onOpenChange })}
     />
   )

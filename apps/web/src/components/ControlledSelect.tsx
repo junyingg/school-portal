@@ -11,7 +11,7 @@ interface ControlledSelectProps<Values extends FieldValues, Output> {
   readonly options: readonly SelectOption[]
   readonly serverMessage?: string | undefined
   readonly isLoading?: boolean
-  readonly emptyContent?: ReactNode
+  readonly popupContent?: ReactNode
   readonly footnote?: ReactNode
   readonly onOpenChange?: (isOpen: boolean) => void
   readonly onEdit?: (() => void) | undefined
@@ -25,7 +25,7 @@ export function ControlledSelect<Values extends FieldValues, Output>({
   options,
   serverMessage,
   isLoading = false,
-  emptyContent,
+  popupContent,
   footnote,
   onOpenChange,
   onEdit,
@@ -54,7 +54,7 @@ export function ControlledSelect<Values extends FieldValues, Output>({
               isInvalid={message !== undefined}
               describedBy={message === undefined ? undefined : messageId}
               isLoading={isLoading}
-              emptyContent={emptyContent}
+              popupContent={popupContent}
               onChange={(value) => {
                 field.onChange(value)
                 onEdit?.()
