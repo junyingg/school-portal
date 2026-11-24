@@ -66,6 +66,8 @@ test("shows the empty state (stubbed API)", async ({ page }) => {
 
   await page.goto("/teachers")
 
-  await expect(page.getByText("There are no existing teachers yet.")).toBeVisible()
+  const card = page.getByRole("region", { name: "Teachers", exact: true })
+  await expect(card.getByText("There are no existing teachers yet.")).toBeVisible()
+  await expect(card.getByRole("button", { name: "Add Teacher" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Add Teacher" })).toHaveCount(1)
 })

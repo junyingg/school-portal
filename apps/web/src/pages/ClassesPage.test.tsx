@@ -26,14 +26,15 @@ describe("ClassesPage", () => {
     expect(screen.getByRole("button", { name: "Add Class" })).toBeInTheDocument()
   })
 
-  it("shows the empty state with one Add Class button that opens the form", async () => {
+  it("shows the empty state with its only Add Class button inside the card", async () => {
     server.use(classesEmpty())
     const user = userEvent.setup()
     renderClassesPage()
 
-    expect(await screen.findByText(EMPTY_MESSAGE)).toBeInTheDocument()
+    const card = await screen.findByRole("region", { name: "Classes" })
+    expect(await within(card).findByText(EMPTY_MESSAGE)).toBeInTheDocument()
     expect(screen.getAllByRole("button", { name: "Add Class" })).toHaveLength(1)
-    await user.click(screen.getByRole("button", { name: "Add Class" }))
+    await user.click(within(card).getByRole("button", { name: "Add Class" }))
 
     expect(await screen.findByRole("heading", { level: 1, name: "Add Class" })).toBeInTheDocument()
   })
@@ -43,7 +44,12 @@ describe("ClassesPage", () => {
 
     const table = await screen.findByRole("table", { name: "Classes" })
     expect(within(table).getAllByRole("row")).toHaveLength(6)
-    expect(screen.getByRole("button", { name: "Add Class" })).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Add Class" })).toHaveLength(1)
+    expect(
+      within(screen.getByRole("region", { name: "Classes" })).queryByRole("button", {
+        name: "Add Class",
+      }),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText(EMPTY_MESSAGE)).not.toBeInTheDocument()
   })
 
