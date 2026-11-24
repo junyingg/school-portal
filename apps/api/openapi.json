@@ -26,8 +26,7 @@
                   },
                   "subject": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
+                    "minLength": 1
                   },
                   "email": {
                     "type": "string",
@@ -260,8 +259,7 @@
                 "properties": {
                   "level": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50
+                    "minLength": 1
                   },
                   "name": {
                     "type": "string",

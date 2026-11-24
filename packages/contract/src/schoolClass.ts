@@ -1,13 +1,15 @@
 import { z } from "zod"
 import {
-  CLASS_LEVEL_MAX_LENGTH,
   CLASS_NAME_MAX_LENGTH,
+  LEVEL_NOT_LISTED_MESSAGE,
   emailField,
+  listedValue,
   requiredText,
 } from "./fieldRules.ts"
+import { CLASS_LEVELS } from "./optionLists.ts"
 
 export const createClassRequestSchema = z.object({
-  level: requiredText("level", CLASS_LEVEL_MAX_LENGTH),
+  level: listedValue("level", CLASS_LEVELS, LEVEL_NOT_LISTED_MESSAGE),
   name: requiredText("name", CLASS_NAME_MAX_LENGTH),
   teacherEmail: emailField("teacherEmail"),
 })
