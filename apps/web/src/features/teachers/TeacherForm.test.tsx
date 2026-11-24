@@ -116,7 +116,7 @@ describe("TeacherForm", () => {
     await user.type(screen.getByRole("textbox", { name: "Name" }), "Gao Ah Xing")
     await chooseSubject(user, "English Language")
     await user.type(screen.getByRole("textbox", { name: "Email Address" }), "teacher@gov")
-    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "9283 999")
+    await user.type(screen.getByRole("textbox", { name: "Work Contact Number" }), "9283 9999")
     await user.click(screen.getByRole("button", { name: "Add Teacher" }))
 
     expect(await screen.findByText("This email address is invalid.")).toBeInTheDocument()

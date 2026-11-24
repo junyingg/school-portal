@@ -16,20 +16,27 @@ function messagesFor(values: Record<string, unknown>): string[] {
 }
 
 describe("teacherFormSchema contact number", () => {
+  it("reproduces the design's invalid frame for 9283 9999", () => {
+    expect(messagesFor({ ...VALID_VALUES, contactNumber: "9283 9999" })).toEqual([
+      "This work contact number is invalid.",
+    ])
+  })
+
   it.each([
     ["6123 4567", "61234567"],
     ["68129414", "68129414"],
-    ["91234567", "91234567"],
-    ["9283 9999", "92839999"],
   ])("accepts %j as %s", (contactNumber, digits) => {
     expect(teacherFormSchema.parse({ ...VALID_VALUES, contactNumber }).contactNumber).toBe(digits)
   })
 
-  it.each(["6123456", "612345678", "6123-4567", "6123456a"])("rejects %j", (contactNumber) => {
-    expect(messagesFor({ ...VALID_VALUES, contactNumber })).toEqual([
-      TEACHER_FIELD_MESSAGES.contactNumberInvalid,
-    ])
-  })
+  it.each(["91234567", "81234567", "6123456", "612345678", "6123-4567", "6123456a"])(
+    "rejects %j",
+    (contactNumber) => {
+      expect(messagesFor({ ...VALID_VALUES, contactNumber })).toEqual([
+        TEACHER_FIELD_MESSAGES.contactNumberInvalid,
+      ])
+    },
+  )
 
   it.each(["", "   "])("reports %j as required", (contactNumber) => {
     expect(messagesFor({ ...VALID_VALUES, contactNumber })).toEqual([
