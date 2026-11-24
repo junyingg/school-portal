@@ -1,3 +1,4 @@
+import { CLASS_LEVELS, SUBJECTS } from "@school-portal/contract"
 import { readFile } from "node:fs/promises"
 import { describe, expect, it } from "vitest"
 import { OPENAPI_DOCUMENT_PATH, generateOpenApiDocument } from "./openApiDocument.ts"
@@ -44,6 +45,29 @@ describe("generateOpenApiDocument", () => {
         requestBody: {
           content: {
             "application/json": { schema: { required: ["level", "name", "teacherEmail"] } },
+          },
+        },
+      },
+    })
+  })
+
+  it("lists the allowed subject and level values", async () => {
+    const document = await generatedDocument()
+
+    expect(document.paths["/api/teachers"]).toMatchObject({
+      post: {
+        requestBody: {
+          content: {
+            "application/json": { schema: { properties: { subject: { enum: [...SUBJECTS] } } } },
+          },
+        },
+      },
+    })
+    expect(document.paths["/api/classes"]).toMatchObject({
+      post: {
+        requestBody: {
+          content: {
+            "application/json": { schema: { properties: { level: { enum: [...CLASS_LEVELS] } } } },
           },
         },
       },
