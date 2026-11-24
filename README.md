@@ -2,6 +2,8 @@
 
 An admin web app and REST API for registering teachers and adding classes, each with exactly one form teacher. It is one TypeScript repository: a Fastify API on PostgreSQL, a React and Ant Design web app, and a shared Zod contract that both sides validate against. The full stack runs in Docker, behind nginx.
 
+The reasoning, the code walk-through and a requirement-by-requirement map are under [Further reading](#further-reading).
+
 ## Hosted links
 
 Not deployed. The app runs locally with Docker; see [Quick start](#quick-start).
@@ -286,3 +288,9 @@ docker/              Dockerfiles, nginx config and the PostgreSQL roles script
 scripts/initEnv.ts   Generates .env with random passwords
 compose.yaml         The full stack; compose.dev.yaml publishes PostgreSQL for local development
 ```
+
+## Further reading
+
+- [docs/DECISIONS.md](docs/DECISIONS.md): why the stack, the repository layout and the validation rules are what they are, with the alternatives weighed.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): what each package and key file does, one request end to end, how the web app loads data and shows errors, the schema and roles, and where the tests live.
+- [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md): each requirement in the brief, how it is met, the files and tests that prove it, and its status.
