@@ -44,10 +44,7 @@ export function emailField(field: string) {
 }
 
 export function contactNumberField() {
-  return z.preprocess(
-    (input) => (typeof input === "string" ? input.replace(/\s+/g, "") : input),
-    requiredString("contactNumber").regex(CONTACT_NUMBER_PATTERN, CONTACT_NUMBER_MESSAGE),
-  )
+  return requiredString("contactNumber").regex(CONTACT_NUMBER_PATTERN, CONTACT_NUMBER_MESSAGE)
 }
 
 export function listedValue<const Values extends readonly [string, ...string[]]>(
