@@ -3,7 +3,9 @@ import type { z } from "zod"
 import {
   CONTACT_NUMBER_MESSAGE,
   CONTACT_NUMBER_PATTERN,
+  LEVEL_NOT_LISTED_MESSAGE,
   SIMPLE_EMAIL_PATTERN,
+  SUBJECT_NOT_LISTED_MESSAGE,
   contactNumberField,
   emailField,
   requiredText,
@@ -54,9 +56,15 @@ describe("contactNumberField", () => {
   })
 })
 
-describe("CONTACT_NUMBER_MESSAGE", () => {
-  it("holds its exact text", () => {
+describe("message constants", () => {
+  it("hold their exact text", () => {
     expect(CONTACT_NUMBER_MESSAGE).toBe("contactNumber must be 8 digits")
+    expect(SUBJECT_NOT_LISTED_MESSAGE).toBe(
+      "subject must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education",
+    )
+    expect(LEVEL_NOT_LISTED_MESSAGE).toBe(
+      "level must be one of: Primary 1, Primary 2, Primary 3, Primary 4, Primary 5, Primary 6",
+    )
   })
 })
 

@@ -1,4 +1,4 @@
-import { SPEC_TEACHERS } from "@school-portal/contract"
+import { SPEC_TEACHERS, SUBJECT_NOT_LISTED_MESSAGE } from "@school-portal/contract"
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { buildTestApp, type TestApp } from "./support/buildTestApp.ts"
 import { TEACHERS_PATH, aTeacherRequest, getJson, postJson } from "./support/requests.ts"
@@ -65,15 +65,15 @@ describe("POST /api/teachers", () => {
     expect(response.statusCode).toBe(201)
   })
 
-  it("accepts a subject outside the design list", async () => {
+  it("rejects an unlisted subject", async () => {
     const response = await postJson(
       testApp.app,
       TEACHERS_PATH,
       aTeacherRequest({ subject: "Chemistry" }),
     )
 
-    expect(response.statusCode).toBe(201)
-    expect(response.json()).toMatchObject({ subject: "Chemistry" })
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toStrictEqual({ error: SUBJECT_NOT_LISTED_MESSAGE })
   })
 
   it("accepts a formatted contact number and stores its digits", async () => {

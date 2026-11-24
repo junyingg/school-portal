@@ -393,7 +393,7 @@
           }
         },
         {
-          "name": "POST an empty subject",
+          "name": "POST an unlisted subject",
           "event": [
             {
               "listen": "test",
@@ -401,7 +401,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"error is subject required\", () => pm.expect(pm.response.json().error).to.eql(\"subject is required\"));"
+                  "pm.test(\"error is subjectNotListedMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"subjectNotListedMessage\")));"
                 ]
               }
             }
@@ -426,7 +426,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"name\":\"Mary\",\"subject\":\"\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"68129414\"}"
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Chemistry\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"68129414\"}"
             }
           }
         },
@@ -908,7 +908,7 @@
           }
         },
         {
-          "name": "POST an empty level",
+          "name": "POST an unlisted level",
           "event": [
             {
               "listen": "test",
@@ -916,7 +916,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"error is level required\", () => pm.expect(pm.response.json().error).to.eql(\"level is required\"));"
+                  "pm.test(\"error is levelNotListedMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"levelNotListedMessage\")));"
                 ]
               }
             }
@@ -941,7 +941,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"level\":\"\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{kenEmail}}\"}"
+              "raw": "{\"level\":\"Secondary 1\",\"name\":\"{{className}}\",\"teacherEmail\":\"{{kenEmail}}\"}"
             }
           }
         }
@@ -1087,6 +1087,14 @@
     {
       "key": "bodyTooLargeMessage",
       "value": "Request body too large"
+    },
+    {
+      "key": "subjectNotListedMessage",
+      "value": "subject must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education"
+    },
+    {
+      "key": "levelNotListedMessage",
+      "value": "level must be one of: Primary 1, Primary 2, Primary 3, Primary 4, Primary 5, Primary 6"
     }
   ]
 }
