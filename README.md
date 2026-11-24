@@ -136,6 +136,8 @@ Every error body is `{ "error": "<message>" }`. Several validation problems are 
 | Malformed JSON                                                         | 400    | Request body must be valid JSON                                     |
 | Body is not a JSON object, is empty, or is missing                     | 400    | Request body must be a JSON object                                  |
 | A field is missing, empty, the wrong type, too long or badly formatted | 400    | for example `name is required; email must be a valid email address` |
+| Subject not in the list                                                | 400    | `subject must be one of: English Language, …`                       |
+| Level not in the list                                                  | 400    | `level must be one of: Primary 1, …`                                |
 | Unknown `teacherEmail`                                                 | 400    | No teacher found with email `<email>`                               |
 | Body length does not match `Content-Length`                            | 400    | Request body size did not match Content-Length                      |
 | Teacher email already registered (case-insensitive)                    | 409    | A teacher with this email already exists                            |
@@ -158,7 +160,7 @@ nginx adds its own, in the same shape:
 
 ### OpenAPI
 
-`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It describes `subject` and `level` as bounded strings; the web form narrows them to the Figma lists, while the API accepts any non-empty value because the written API contract does not define a closed list. Router-level `404`/`405` responses are documented in the error table rather than on each operation, because they are not operation-level outcomes.
+`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It lists the allowed subject and level values; the API trims a value before matching it against the list. Router-level `404`/`405` responses are documented in the error table rather than on each operation, because they are not operation-level outcomes.
 
 ### Health
 
@@ -198,10 +200,10 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 3. An unknown `teacherEmail` returns 400 and names the email.
 4. A teacher who is already a form teacher returns 409.
 5. A class's level and name together are not unique; only the form-teacher rule applies. See the suggestions below.
-6. The web form restricts subject and level to the design's fixed lists; the API accepts any non-empty string, because the written API contract does not define those lists. See [Design controls and API validation](#design-controls-and-api-validation).
-7. Contact number: both the web form and the API strip whitespace and require exactly 8 digits. Neither enforces a leading 6; that rule was inferred from one design error example and would reject valid mobile-style work numbers.
+6. Subject and level must come from the design's fixed lists; see [Rules added from the design](#rules-added-from-the-design-enforced).
+7. Contact number: the web form strips spaces and requires 8 digits starting with 6, matching the design's error example. The API requires 8 digits (surrounding spaces trimmed, inner spaces rejected) and does not enforce the leading 6, because that rule is inferred rather than documented.
 8. Email uses a simple `local@domain.tld` check in both the form and the API. `teacher@gov.sg` is accepted, although the design's error example shows it as invalid.
-9. Length limits: 100 characters for a teacher name, 100 for a subject, 50 for a class name, 50 for a class level, 254 for an email.
+9. Length limits: 100 characters for a teacher name, 50 for a class name, 254 for an email.
 10. Lists are returned in insertion order, without pagination.
 11. Unknown request fields are ignored.
 12. A body with a non-JSON `Content-Type` returns 415; a POST with no body returns 400.
@@ -218,20 +220,28 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 23. The web app shows contact numbers as `6736 3939`; the API stores and returns eight digits.
 24. Add Class keeps a one-hour session draft. It survives the "Add a teacher" round trip and is cleared after a successful save or an explicit Back.
 
-## Design controls and API validation
+## Rules added from the design (enforced)
 
-The written specification does not constrain subject or level. The linked Figma's documentation card does, so the **web form** offers the design's lists:
+The specification lists no field rules. The linked Figma's documentation card does, and this submission enforces them in both the web form and the API:
 
-- **Subject**: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education.
-- **Class level**: Primary 1 to Primary 6.
+- **Subject** must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education.
+- **Class level** must be one of: Primary 1 to Primary 6.
+- Both are trimmed and then matched exactly, so `mathematics` is rejected. The 400 message lists the allowed values.
+- **Contact number**: the web form also requires a leading 6, inferred from one error example in the design. The API does not, because that evidence is weak.
 
-The **API** accepts any non-empty string for those fields, up to 100 characters for a subject and 50 for a class level. This keeps direct API clients compatible with the published contract and avoids rejecting values an automated tester considers valid, while the form still preserves the design's input controls. Moving these lists into lookup tables would let the form change without a deploy.
+| For enforcing the lists in the API                                | Against                                                                                                          |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| The web app and the API accept and reject exactly the same values | The specification's text states none of these rules                                                              |
+| A direct API call cannot store a value the form would refuse      | An automated tester sending an unlisted subject or level gets 400, and its class tests for that teacher fail too |
+| Allow-list validation is the safer kind of input validation       | Adding a subject or level needs a code change and a deploy                                                       |
+| Reports by subject or level never meet typos                      | Exact matching is strict for API clients                                                                         |
 
-**Contact number**: both sides remove whitespace and require exactly 8 digits. The leading-6 rule was inferred from one design error example and is not enforced, because it would reject valid mobile-style work numbers.
+Every value in the specification's examples passes. Loosening the rules is a change to `packages/contract/src/fieldRules.ts` and `optionLists.ts`.
 
 ## API design suggestions
 
 - Move the subject and level lists into lookup tables, so they can change without a deploy.
+- Accept mobile numbers if work contacts can be mobile.
 - Decide whether a class's level and name should be unique.
 - Return a `Location` header with each 201.
 - Add a stable machine-readable `code` next to `error`.
