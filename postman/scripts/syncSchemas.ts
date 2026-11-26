@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises"
 import { fileURLToPath } from "node:url"
 import {
   BODY_TOO_LARGE_MESSAGE,
+  CONTACT_NUMBER_MESSAGE,
   FORM_TEACHER_TAKEN_MESSAGE,
   INVALID_JSON_MESSAGE,
   LEVEL_NOT_LISTED_MESSAGE,
@@ -47,6 +48,7 @@ const SYNCED_VALUES = new Map<string, string>([
   ["notAnObjectMessage", NOT_AN_OBJECT_MESSAGE],
   ["unsupportedMediaTypeMessage", UNSUPPORTED_MEDIA_TYPE_MESSAGE],
   ["bodyTooLargeMessage", BODY_TOO_LARGE_MESSAGE],
+  ["contactNumberMessage", CONTACT_NUMBER_MESSAGE],
   ["subjectNotListedMessage", SUBJECT_NOT_LISTED_MESSAGE],
   ["levelNotListedMessage", LEVEL_NOT_LISTED_MESSAGE],
 ])

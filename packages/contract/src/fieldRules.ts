@@ -4,10 +4,10 @@ import { CLASS_LEVELS, SUBJECTS } from "./optionLists.ts"
 export const NAME_MAX_LENGTH = 100
 export const EMAIL_MAX_LENGTH = 254
 export const CLASS_NAME_MAX_LENGTH = 50
-export const CONTACT_NUMBER_PATTERN = /^\d{8}$/
+export const CONTACT_NUMBER_PATTERN = /^[689]\d{7}$/
 export const SIMPLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const CONTROL_CHARACTER_PATTERN = /\p{Cc}/u
-export const CONTACT_NUMBER_MESSAGE = "contactNumber must be 8 digits"
+export const CONTACT_NUMBER_MESSAGE = "contactNumber must be 8 digits starting with 6, 8 or 9"
 export const SUBJECT_NOT_LISTED_MESSAGE = `subject must be one of: ${SUBJECTS.join(", ")}`
 export const LEVEL_NOT_LISTED_MESSAGE = `level must be one of: ${CLASS_LEVELS.join(", ")}`
 
