@@ -96,6 +96,9 @@ test("has no automatically detectable WCAG A/AA violations in the delete dialogs
     await page.goto(path)
     await page.getByRole("button", { name: buttonName }).click()
     await expect(page.getByRole("dialog")).toBeVisible()
+    await page.waitForFunction(() =>
+      document.getAnimations().every((animation) => animation.playState !== "running"),
+    )
 
     expect(await violationsFrom(new AxeBuilder({ page }).withTags(WCAG_A_AND_AA))).toEqual([])
   }
