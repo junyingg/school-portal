@@ -320,10 +320,14 @@
                       "properties": {
                         "name": {
                           "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
                         }
                       },
                       "required": [
-                        "name"
+                        "name",
+                        "email"
                       ],
                       "additionalProperties": false
                     }
@@ -461,10 +465,14 @@
                             "properties": {
                               "name": {
                                 "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
                               }
                             },
                             "required": [
-                              "name"
+                              "name",
+                              "email"
                             ],
                             "additionalProperties": false
                           }

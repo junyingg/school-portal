@@ -16,6 +16,7 @@ export const createClassRequestSchema = z.object({
 
 export const formTeacherSchema = z.object({
   name: z.string(),
+  email: z.string(),
 })
 
 export const schoolClassSchema = z.object({

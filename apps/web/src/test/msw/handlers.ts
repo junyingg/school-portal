@@ -65,7 +65,7 @@ export const handlers = [
     const created: SchoolClass = {
       level: parsed.data.level,
       name: parsed.data.name,
-      formTeacher: { name: formTeacher.name },
+      formTeacher: { name: formTeacher.name, email: formTeacher.email },
     }
     store.classes.push(created)
     return HttpResponse.json(created, { status: HTTP_CREATED })

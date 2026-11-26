@@ -20,7 +20,13 @@ const TEACHERS = {
 }
 
 const CLASSES = {
-  data: [{ level: "Primary 1", name: "Class 1A", formTeacher: { name: "Hannah Low" } }],
+  data: [
+    {
+      level: "Primary 1",
+      name: "Class 1A",
+      formTeacher: { name: "Hannah Low", email: "hannah.low@example.com" },
+    },
+  ],
 }
 
 const PAGES = ["/teachers", "/classes", "/teachers/new", "/classes/new"] as const

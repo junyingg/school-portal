@@ -44,12 +44,21 @@ const DESIGN_TEACHERS: Teacher[] = [
   },
 ]
 
+function formTeacherOf(teacher: Teacher | undefined): SchoolClass["formTeacher"] {
+  if (teacher === undefined) {
+    throw new Error("Every design class needs a design teacher")
+  }
+  return { name: teacher.name, email: teacher.email }
+}
+
+const [HANNAH, WONG, JUSTIN, BILLY, GAO] = DESIGN_TEACHERS
+
 const DESIGN_CLASSES: SchoolClass[] = [
-  { level: "Primary 1", name: "Class 1A", formTeacher: { name: "Hannah Low" } },
-  { level: "Primary 4", name: "Class 4D", formTeacher: { name: "Wong Sze Ting" } },
-  { level: "Primary 5", name: "Class 5E", formTeacher: { name: "Justin Xiong" } },
-  { level: "Primary 3", name: "Class 3C", formTeacher: { name: "Billy Tan" } },
-  { level: "Primary 2", name: "Class 2B", formTeacher: { name: "Gao Ah Xing" } },
+  { level: "Primary 1", name: "Class 1A", formTeacher: formTeacherOf(HANNAH) },
+  { level: "Primary 4", name: "Class 4D", formTeacher: formTeacherOf(WONG) },
+  { level: "Primary 5", name: "Class 5E", formTeacher: formTeacherOf(JUSTIN) },
+  { level: "Primary 3", name: "Class 3C", formTeacher: formTeacherOf(BILLY) },
+  { level: "Primary 2", name: "Class 2B", formTeacher: formTeacherOf(GAO) },
 ]
 
 export const designTeachers: readonly Teacher[] = teacherListResponseSchema.parse({

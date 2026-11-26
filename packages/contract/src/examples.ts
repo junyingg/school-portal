@@ -17,8 +17,16 @@ export const SPEC_TEACHERS = [
 ] as const satisfies readonly Teacher[]
 
 export const SPEC_CLASSES = [
-  { level: "Primary 1", name: "Class 1A", formTeacher: { name: "Mary" } },
-  { level: "Primary 2", name: "Class 2B", formTeacher: { name: "Ken" } },
+  {
+    level: "Primary 1",
+    name: "Class 1A",
+    formTeacher: { name: "Mary", email: "teachermary@gmail.com" },
+  },
+  {
+    level: "Primary 2",
+    name: "Class 2B",
+    formTeacher: { name: "Ken", email: "teacherken@gmail.com" },
+  },
 ] as const satisfies readonly SchoolClass[]
 
 export const SPEC_CREATE_TEACHER_REQUEST: CreateTeacherRequest = SPEC_TEACHERS[0]

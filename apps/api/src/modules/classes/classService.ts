@@ -34,6 +34,7 @@ export function createClassService({
         level: request.level,
         name: request.name,
         formTeacherName: formTeacher.name,
+        formTeacherEmail: formTeacher.email,
       })
     },
 

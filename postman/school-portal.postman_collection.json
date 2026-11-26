@@ -1092,11 +1092,11 @@
     },
     {
       "key": "classSchema",
-      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},\"required\":[\"name\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}"
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"}},\"required\":[\"name\",\"email\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}"
     },
     {
       "key": "classListSchema",
-      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},\"required\":[\"name\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}}},\"required\":[\"data\"],\"additionalProperties\":false}"
+      "value": "{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"type\":\"object\",\"properties\":{\"data\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"level\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"formTeacher\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"}},\"required\":[\"name\",\"email\"],\"additionalProperties\":false}},\"required\":[\"level\",\"name\",\"formTeacher\"],\"additionalProperties\":false}}},\"required\":[\"data\"],\"additionalProperties\":false}"
     },
     {
       "key": "errorSchema",

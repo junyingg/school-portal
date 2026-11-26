@@ -11,6 +11,7 @@ export interface ClassWithFormTeacherRecord {
   readonly level: string
   readonly name: string
   readonly formTeacherName: string
+  readonly formTeacherEmail: string
 }
 
 export interface ClassRepository {
@@ -39,6 +40,7 @@ export function createClassRepository(db: Kysely<Database>): ClassRepository {
           "classes.level as level",
           "classes.name as name",
           "teachers.name as formTeacherName",
+          "teachers.email as formTeacherEmail",
         ])
         .orderBy("classes.id")
         .execute()
