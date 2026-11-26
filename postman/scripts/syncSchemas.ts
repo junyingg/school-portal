@@ -9,6 +9,7 @@ import {
   NOT_AN_OBJECT_MESSAGE,
   SUBJECT_NOT_LISTED_MESSAGE,
   TEACHER_EMAIL_TAKEN_MESSAGE,
+  TEACHER_IS_FORM_TEACHER_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
   classListResponseSchema,
   errorResponseSchema,
@@ -49,6 +50,7 @@ const SYNCED_VALUES = new Map<string, string>([
   ["unsupportedMediaTypeMessage", UNSUPPORTED_MEDIA_TYPE_MESSAGE],
   ["bodyTooLargeMessage", BODY_TOO_LARGE_MESSAGE],
   ["contactNumberMessage", CONTACT_NUMBER_MESSAGE],
+  ["teacherIsFormTeacherMessage", TEACHER_IS_FORM_TEACHER_MESSAGE],
   ["subjectNotListedMessage", SUBJECT_NOT_LISTED_MESSAGE],
   ["levelNotListedMessage", LEVEL_NOT_LISTED_MESSAGE],
 ])
