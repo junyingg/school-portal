@@ -2,7 +2,11 @@ import { createTeacherRequestSchema } from "@school-portal/contract"
 import { errorCodes } from "fastify"
 import { validatorCompiler } from "fastify-type-provider-zod"
 import { describe, expect, it } from "vitest"
-import { UnknownTeacherEmailError } from "./domainErrors.ts"
+import {
+  TeacherIsFormTeacherError,
+  TeacherNotFoundError,
+  UnknownTeacherEmailError,
+} from "./domainErrors.ts"
 import { mapErrorToReply, type ErrorReply } from "./errorMapper.ts"
 
 interface MappingCase {
@@ -142,6 +146,16 @@ const CASES: MappingCase[] = [
     description: "a plain Error",
     input: new Error("select * from teachers"),
     expected: SERVER_FAULT,
+  },
+  {
+    description: "a teacher who does not exist",
+    input: new TeacherNotFoundError("x@y.co"),
+    expected: clientFault(404, "No teacher found with email x@y.co"),
+  },
+  {
+    description: "a teacher who is still a form teacher",
+    input: new TeacherIsFormTeacherError("x@y.co"),
+    expected: clientFault(409, "Teacher is the form teacher of a class and cannot be deleted"),
   },
 ]
 

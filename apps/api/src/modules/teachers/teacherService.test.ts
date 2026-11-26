@@ -1,5 +1,6 @@
 import { SPEC_TEACHERS } from "@school-portal/contract"
 import { describe, expect, it, vi } from "vitest"
+import { TeacherIsFormTeacherError, TeacherNotFoundError } from "../../errors/domainErrors.ts"
 import type { TeacherRecord, TeacherRepository } from "./teacherRepository.ts"
 import { createTeacherService } from "./teacherService.ts"
 
@@ -12,6 +13,7 @@ function fakeRepository(overrides: Partial<TeacherRepository> = {}): TeacherRepo
     insert: () => Promise.reject(new Error("insert not expected")),
     listInInsertionOrder: () => Promise.resolve([]),
     findByEmail: () => Promise.resolve(undefined),
+    deleteByEmail: () => Promise.resolve(false),
     ...overrides,
   }
 }
@@ -48,5 +50,36 @@ describe("listTeachers", () => {
 
   it("returns an empty list when there are no teachers", async () => {
     await expect(serviceWith({}).listTeachers()).resolves.toStrictEqual([])
+  })
+})
+
+describe("deleteTeacher", () => {
+  it("deletes the teacher found by email", async () => {
+    const deleteByEmail = vi.fn<TeacherRepository["deleteByEmail"]>().mockResolvedValue(true)
+
+    await expect(
+      serviceWith({ deleteByEmail }).deleteTeacher("TeacherMary@Gmail.com"),
+    ).resolves.toBeUndefined()
+    expect(deleteByEmail).toHaveBeenCalledExactlyOnceWith("TeacherMary@Gmail.com")
+  })
+
+  it("rejects an email that matches no teacher", async () => {
+    const deletion = serviceWith({ deleteByEmail: () => Promise.resolve(false) }).deleteTeacher(
+      "x@y.co",
+    )
+
+    await expect(deletion).rejects.toBeInstanceOf(TeacherNotFoundError)
+    await expect(deletion).rejects.toMatchObject({ message: "No teacher found with email x@y.co" })
+  })
+
+  it("propagates the repository error unchanged", async () => {
+    const stillFormTeacher = new TeacherIsFormTeacherError("x@y.co")
+    const deleteByEmail = vi
+      .fn<TeacherRepository["deleteByEmail"]>()
+      .mockRejectedValue(stillFormTeacher)
+
+    await expect(serviceWith({ deleteByEmail }).deleteTeacher("x@y.co")).rejects.toBe(
+      stillFormTeacher,
+    )
   })
 })

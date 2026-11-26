@@ -8,7 +8,7 @@ import type { FastifyInstance, FastifyPluginCallback } from "fastify"
 import { describe, expect, it, onTestFinished, vi } from "vitest"
 import { buildApp } from "./app.ts"
 import type { AppServices } from "./composition.ts"
-import { UnknownTeacherEmailError } from "./errors/domainErrors.ts"
+import { TeacherNotFoundError, UnknownTeacherEmailError } from "./errors/domainErrors.ts"
 import type { ClassService } from "./modules/classes/classService.ts"
 import type { TeacherService } from "./modules/teachers/teacherService.ts"
 
@@ -20,7 +20,11 @@ const LEAKY_ERROR_MESSAGE = "select * from teachers where password = 'hunter2'"
 function fakeTeacherService(
   registerTeacher: TeacherService["registerTeacher"] = () => Promise.resolve(MARY),
 ): TeacherService {
-  return { registerTeacher, listTeachers: () => Promise.resolve([MARY]) }
+  return {
+    registerTeacher,
+    listTeachers: () => Promise.resolve([MARY]),
+    deleteTeacher: () => Promise.resolve(),
+  }
 }
 
 function fakeClassService(
@@ -330,5 +334,44 @@ describe("POST /api/classes success", () => {
 
     expect(response.statusCode).toBe(201)
     expect(response.json()).toStrictEqual(CLASS_1A)
+  })
+})
+
+describe("DELETE /api/teachers/:email", () => {
+  it("replies 204 with no body once the service deletes the teacher", async () => {
+    const deleteTeacher = vi.fn<TeacherService["deleteTeacher"]>().mockResolvedValue()
+    const teacherService = { ...fakeTeacherService(), deleteTeacher }
+    const app = await startApp({ services: fakeServices({ teacherService }) })
+
+    const response = await app.inject({
+      method: "DELETE",
+      url: "/api/teachers/teachermary%40gmail.com",
+    })
+
+    expect(response.statusCode).toBe(204)
+    expect(response.body).toBe("")
+    expect(deleteTeacher).toHaveBeenCalledExactlyOnceWith("teachermary@gmail.com")
+  })
+
+  it("replies 404 naming an email that matches no teacher", async () => {
+    const teacherService = {
+      ...fakeTeacherService(),
+      deleteTeacher: () => Promise.reject(new TeacherNotFoundError("x@y.co")),
+    }
+    const app = await startApp({ services: fakeServices({ teacherService }) })
+
+    const response = await app.inject({ method: "DELETE", url: "/api/teachers/x%40y.co" })
+
+    expect(response.statusCode).toBe(404)
+    expect(response.json()).toStrictEqual({ error: "No teacher found with email x@y.co" })
+  })
+
+  it("replies 400 to a malformed email", async () => {
+    const app = await startApp()
+
+    const response = await app.inject({ method: "DELETE", url: "/api/teachers/mary" })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toStrictEqual({ error: "email must be a valid email address" })
   })
 })

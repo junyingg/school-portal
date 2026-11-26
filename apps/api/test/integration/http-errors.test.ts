@@ -143,6 +143,21 @@ describe.each(POST_PATHS)("unsupported methods on %s", (path) => {
   )
 })
 
+describe("unsupported methods on a teacher", () => {
+  it.each(["GET", "POST", "PUT", "PATCH"] as const)(
+    "replies 405 to %s with an Allow header",
+    async (method) => {
+      const response = await testApp.app.inject({
+        method,
+        url: `${TEACHERS_PATH}/teachermary%40gmail.com`,
+      })
+
+      expectJsonError(response, 405, "Method not allowed")
+      expect(response.headers.allow).toBe("DELETE")
+    },
+  )
+})
+
 describe("trailing slash", () => {
   it("serves GET /api/teachers/", async () => {
     const response = await getJson(testApp.app, `${TEACHERS_PATH}/`)

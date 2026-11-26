@@ -3,7 +3,12 @@ import { z } from "zod"
 import { SPEC_TEACHERS } from "./examples.ts"
 import { SUBJECT_NOT_LISTED_MESSAGE } from "./fieldRules.ts"
 import { SUBJECTS } from "./optionLists.ts"
-import { createTeacherRequestSchema, teacherListResponseSchema, teacherSchema } from "./teacher.ts"
+import {
+  createTeacherRequestSchema,
+  teacherListResponseSchema,
+  teacherPathParamsSchema,
+  teacherSchema,
+} from "./teacher.ts"
 
 const [MARY, KEN] = SPEC_TEACHERS
 
@@ -125,5 +130,21 @@ describe("teacherSchema as JSON Schema", () => {
       required: ["name", "subject", "email", "contactNumber"],
       additionalProperties: false,
     })
+  })
+})
+
+describe("teacherPathParamsSchema", () => {
+  it("accepts a teacher email and trims it", () => {
+    expect(teacherPathParamsSchema.parse({ email: " teachermary@gmail.com " })).toStrictEqual({
+      email: "teachermary@gmail.com",
+    })
+  })
+
+  it("rejects a malformed email", () => {
+    const result = teacherPathParamsSchema.safeParse({ email: "mary" })
+
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      "email must be a valid email address",
+    ])
   })
 })

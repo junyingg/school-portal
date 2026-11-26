@@ -13,17 +13,38 @@ async function generatedDocument(): Promise<OpenApiDocument> {
 }
 
 describe("generateOpenApiDocument", () => {
-  it("documents only the two API paths", async () => {
+  it("documents only the API paths", async () => {
     const document = await generatedDocument()
 
-    expect(Object.keys(document.paths)).toEqual(["/api/teachers", "/api/classes"])
+    expect(Object.keys(document.paths)).toEqual([
+      "/api/teachers",
+      "/api/teachers/{email}",
+      "/api/classes",
+    ])
   })
 
-  it("documents GET and POST on each path and nothing else", async () => {
+  it("documents the supported methods on each path and nothing else", async () => {
     const document = await generatedDocument()
 
     expect(Object.keys(document.paths["/api/teachers"] ?? {})).toEqual(["post", "get"])
+    expect(Object.keys(document.paths["/api/teachers/{email}"] ?? {})).toEqual(["delete"])
     expect(Object.keys(document.paths["/api/classes"] ?? {})).toEqual(["post", "get"])
+  })
+
+  it("describes deleting a teacher: the email in the path, 204, and the error replies", async () => {
+    const document = await generatedDocument()
+    const deletion = document.paths["/api/teachers/{email}"]?.["delete"]
+
+    expect(deletion).toMatchObject({
+      parameters: [{ in: "path", name: "email", required: true }],
+    })
+    expect(Object.keys((deletion as { responses: object }).responses)).toEqual([
+      "204",
+      "400",
+      "404",
+      "409",
+      "500",
+    ])
   })
 
   it("describes the request bodies from the contract schemas", async () => {

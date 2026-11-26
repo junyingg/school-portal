@@ -49,3 +49,7 @@ export function aClassRequest(
 ): Record<string, unknown> {
   return { ...SPEC_CREATE_CLASS_REQUEST, ...overrides }
 }
+
+export function deleteResource(app: FastifyInstance, url: string): Promise<LightMyRequestResponse> {
+  return app.inject({ method: "DELETE", url })
+}
