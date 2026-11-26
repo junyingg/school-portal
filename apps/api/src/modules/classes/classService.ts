@@ -1,5 +1,5 @@
 import type { CreateClassRequest, SchoolClass } from "@school-portal/contract"
-import { UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
+import { ClassNotFoundError, UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
 import type { TeacherRepository } from "../teachers/teacherRepository.ts"
 import { toSchoolClass } from "./classMapper.ts"
 import type { ClassRepository } from "./classRepository.ts"
@@ -7,6 +7,7 @@ import type { ClassRepository } from "./classRepository.ts"
 export interface ClassService {
   addClass(request: CreateClassRequest): Promise<SchoolClass>
   listClasses(): Promise<SchoolClass[]>
+  deleteClass(teacherEmail: string): Promise<void>
 }
 
 export interface ClassServiceDependencies {
@@ -41,6 +42,13 @@ export function createClassService({
     async listClasses() {
       const records = await classRepository.listInInsertionOrder()
       return records.map(toSchoolClass)
+    },
+
+    async deleteClass(teacherEmail) {
+      const wasDeleted = await classRepository.deleteByFormTeacherEmail(teacherEmail)
+      if (!wasDeleted) {
+        throw new ClassNotFoundError(teacherEmail)
+      }
     },
   }
 }

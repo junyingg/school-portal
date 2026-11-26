@@ -1,5 +1,6 @@
 import {
   TEACHER_IS_FORM_TEACHER_MESSAGE,
+  noClassForTeacherMessage,
   unknownTeacherEmailMessage,
 } from "@school-portal/contract"
 
@@ -29,6 +30,16 @@ export class TeacherIsFormTeacherError extends Error {
   constructor(email: string) {
     super(TEACHER_IS_FORM_TEACHER_MESSAGE)
     this.name = "TeacherIsFormTeacherError"
+    this.email = email
+  }
+}
+
+export class ClassNotFoundError extends Error {
+  readonly email: string
+
+  constructor(email: string) {
+    super(noClassForTeacherMessage(email))
+    this.name = "ClassNotFoundError"
     this.email = email
   }
 }

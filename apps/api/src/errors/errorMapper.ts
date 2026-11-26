@@ -9,6 +9,7 @@ import {
 } from "@school-portal/contract"
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod"
 import {
+  ClassNotFoundError,
   TeacherIsFormTeacherError,
   TeacherNotFoundError,
   UnknownTeacherEmailError,
@@ -59,6 +60,7 @@ type DomainErrorType = new (email: string) => Error
 const DOMAIN_ERROR_STATUSES: readonly (readonly [DomainErrorType, number])[] = [
   [UnknownTeacherEmailError, HTTP_BAD_REQUEST],
   [TeacherNotFoundError, HTTP_NOT_FOUND],
+  [ClassNotFoundError, HTTP_NOT_FOUND],
   [TeacherIsFormTeacherError, HTTP_CONFLICT],
 ]
 

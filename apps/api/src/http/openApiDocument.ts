@@ -16,7 +16,7 @@ const UNAVAILABLE_SERVICES: AppServices = {
     listTeachers: unavailable,
     deleteTeacher: unavailable,
   },
-  classService: { addClass: unavailable, listClasses: unavailable },
+  classService: { addClass: unavailable, listClasses: unavailable, deleteClass: unavailable },
 }
 
 export async function generateOpenApiDocument(): Promise<string> {

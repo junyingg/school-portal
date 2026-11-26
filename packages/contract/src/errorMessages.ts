@@ -16,3 +16,7 @@ export function unknownTeacherEmailMessage(email: string): string {
 }
 export const METHOD_NOT_ALLOWED_MESSAGE = "Method not allowed"
 export const SERVICE_UNAVAILABLE_MESSAGE = "Service unavailable"
+
+export function noClassForTeacherMessage(teacherEmail: string): string {
+  return `No class found with form teacher email ${teacherEmail}`
+}

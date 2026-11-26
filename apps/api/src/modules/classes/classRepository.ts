@@ -1,5 +1,6 @@
 import type { Kysely } from "kysely"
 import type { Database } from "../../db/database.ts"
+import { teacherHasEmail } from "../../db/teacherEmail.ts"
 
 export interface NewClass {
   readonly level: string
@@ -17,6 +18,7 @@ export interface ClassWithFormTeacherRecord {
 export interface ClassRepository {
   insert(schoolClass: NewClass): Promise<void>
   listInInsertionOrder(): Promise<ClassWithFormTeacherRecord[]>
+  deleteByFormTeacherEmail(email: string): Promise<boolean>
 }
 
 export function createClassRepository(db: Kysely<Database>): ClassRepository {
@@ -44,6 +46,16 @@ export function createClassRepository(db: Kysely<Database>): ClassRepository {
         ])
         .orderBy("classes.id")
         .execute()
+    },
+
+    async deleteByFormTeacherEmail(email) {
+      const result = await db
+        .deleteFrom("classes")
+        .where("form_teacher_id", "in", (eb) =>
+          eb.selectFrom("teachers").select("id").where(teacherHasEmail(email)),
+        )
+        .executeTakeFirst()
+      return result.numDeletedRows > 0n
     },
   }
 }

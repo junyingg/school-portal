@@ -14,6 +14,10 @@ export const createClassRequestSchema = z.object({
   teacherEmail: emailField("teacherEmail"),
 })
 
+export const classPathParamsSchema = z.object({
+  teacherEmail: emailField("teacherEmail"),
+})
+
 export const formTeacherSchema = z.object({
   name: z.string(),
   email: z.string(),
@@ -30,6 +34,7 @@ export const classListResponseSchema = z.object({
 })
 
 export type CreateClassRequest = z.output<typeof createClassRequestSchema>
+export type ClassPathParams = z.output<typeof classPathParamsSchema>
 export type FormTeacher = z.output<typeof formTeacherSchema>
 export type SchoolClass = z.output<typeof schoolClassSchema>
 export type ClassListResponse = z.output<typeof classListResponseSchema>

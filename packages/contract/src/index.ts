@@ -12,6 +12,7 @@ export {
   TEACHER_EMAIL_TAKEN_MESSAGE,
   TEACHER_IS_FORM_TEACHER_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
+  noClassForTeacherMessage,
   unknownTeacherEmailMessage,
 } from "./errorMessages.ts"
 export { errorResponseSchema, type ErrorResponse } from "./errorResponse.ts"
@@ -35,10 +36,12 @@ export {
 export { CLASS_LEVELS, SUBJECTS, type ClassLevel, type Subject } from "./optionLists.ts"
 export {
   classListResponseSchema,
+  classPathParamsSchema,
   createClassRequestSchema,
   formTeacherSchema,
   schoolClassSchema,
   type ClassListResponse,
+  type ClassPathParams,
   type CreateClassRequest,
   type FormTeacher,
   type SchoolClass,
