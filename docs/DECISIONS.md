@@ -236,4 +236,4 @@ The Classes page needs the form teacher's email to delete a class, but the speci
 
 ### Delete in the web app
 
-An Actions column holds a Delete button per row, named after the teacher or class for screen readers. A `ConfirmDialog` (antd `Modal`, in `components/ui/`) asks first. A refusal is explained in the dialog in the designs' voice ("This teacher is the form teacher of a class. Delete the class first."), and the list refetches afterwards. There is no design for this; it follows antd's defaults and the existing error patterns.
+Each row ends with a delete icon (antd's `DeleteOutlined`, in a text-type `IconButton` with a "Delete" tooltip). The button's accessible name is "Delete <teacher or class name>", and the column header shows no text but is named "Actions" for screen readers. A `ConfirmDialog` (antd `Modal`, in `components/ui/`) asks first. A refusal is explained in the dialog in the designs' voice ("This teacher is the form teacher of a class. Delete the class first."), and the list refetches afterwards. There is no design for this; it follows antd's defaults and the existing error patterns.
