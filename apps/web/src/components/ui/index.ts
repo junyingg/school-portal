@@ -1,5 +1,6 @@
 export { Button, type ButtonVariant } from "./Button.tsx"
 export { Card } from "./Card.tsx"
+export { ConfirmDialog } from "./ConfirmDialog.tsx"
 export { DataTable, type DataColumn } from "./DataTable.tsx"
 export { ErrorBanner } from "./ErrorBanner.tsx"
 export { FormField } from "./FormField.tsx"

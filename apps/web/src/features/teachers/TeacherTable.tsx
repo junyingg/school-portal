@@ -1,8 +1,9 @@
 import type { Teacher } from "@school-portal/contract"
-import { DataTable, type DataColumn } from "../../components/ui/index.ts"
+import { Button, DataTable, type DataColumn } from "../../components/ui/index.ts"
 import { formatContactNumber } from "./formatContactNumber.ts"
+import { TEACHER_DELETE_COPY } from "./teacherDeleteCopy.ts"
 
-const TEACHER_COLUMNS: readonly DataColumn<Teacher>[] = [
+const DESIGN_COLUMNS: readonly DataColumn<Teacher>[] = [
   { key: "position", title: "#", width: 56, render: (_teacher, position) => position },
   { key: "name", title: "Name", render: (teacher) => teacher.name },
   { key: "subject", title: "Subject", render: (teacher) => teacher.subject },
@@ -16,8 +17,33 @@ const TEACHER_COLUMNS: readonly DataColumn<Teacher>[] = [
 
 interface TeacherTableProps {
   readonly teachers: readonly Teacher[]
+  readonly onDelete: (teacher: Teacher) => void
 }
 
-export function TeacherTable({ teachers }: TeacherTableProps) {
-  return <DataTable label="Teachers" columns={TEACHER_COLUMNS} rows={teachers} />
+function actionsColumn(onDelete: (teacher: Teacher) => void): DataColumn<Teacher> {
+  return {
+    key: "actions",
+    title: "Actions",
+    render: (teacher) => (
+      <Button
+        variant="danger"
+        accessibleName={`${TEACHER_DELETE_COPY.confirm} ${teacher.name}`}
+        onClick={() => {
+          onDelete(teacher)
+        }}
+      >
+        {TEACHER_DELETE_COPY.confirm}
+      </Button>
+    ),
+  }
+}
+
+export function TeacherTable({ teachers, onDelete }: TeacherTableProps) {
+  return (
+    <DataTable
+      label="Teachers"
+      columns={[...DESIGN_COLUMNS, actionsColumn(onDelete)]}
+      rows={teachers}
+    />
+  )
 }

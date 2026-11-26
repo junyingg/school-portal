@@ -61,3 +61,10 @@ export async function postJson<Schema extends z.ZodType>(
   })
   return parseResponse(response, schema)
 }
+
+export async function deleteResource(path: string): Promise<void> {
+  const response = await send(path, { method: "DELETE", headers: { accept: "application/json" } })
+  if (!response.ok) {
+    throw new ApiError(response.status, await errorMessageOf(response))
+  }
+}
