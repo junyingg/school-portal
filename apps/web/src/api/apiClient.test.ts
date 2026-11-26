@@ -1,5 +1,6 @@
 import {
   TEACHER_EMAIL_TAKEN_MESSAGE,
+  TEACHER_IS_FORM_TEACHER_MESSAGE,
   teacherListResponseSchema,
   teacherSchema,
 } from "@school-portal/contract"
@@ -14,7 +15,7 @@ import {
 } from "../test/msw/handlers.ts"
 import { server, setupMswServer } from "../test/msw/server.ts"
 import { ApiError } from "./ApiError.ts"
-import { getJson, postJson } from "./apiClient.ts"
+import { deleteResource, getJson, postJson } from "./apiClient.ts"
 
 setupMswServer()
 
@@ -89,6 +90,27 @@ describe("ApiError", () => {
     await expect(getJson(TEACHERS_URL, teacherListResponseSchema)).rejects.toMatchObject({
       status: 0,
       message: GENERIC_MESSAGE,
+    })
+  })
+})
+
+describe("deleteResource", () => {
+  it("resolves once the server replies 204", async () => {
+    server.use(http.delete(`${TEACHERS_URL}/:email`, () => new HttpResponse(null, { status: 204 })))
+
+    await expect(deleteResource(`${TEACHERS_URL}/x%40y.co`)).resolves.toBeUndefined()
+  })
+
+  it("carries the status and the server's error message", async () => {
+    server.use(
+      http.delete(`${TEACHERS_URL}/:email`, () =>
+        HttpResponse.json({ error: TEACHER_IS_FORM_TEACHER_MESSAGE }, { status: 409 }),
+      ),
+    )
+
+    await expect(deleteResource(`${TEACHERS_URL}/x%40y.co`)).rejects.toMatchObject({
+      status: 409,
+      message: TEACHER_IS_FORM_TEACHER_MESSAGE,
     })
   })
 })

@@ -1,4 +1,5 @@
 import {
+  TEACHER_IS_FORM_TEACHER_MESSAGE,
   createClassRequestSchema,
   createTeacherRequestSchema,
   unknownTeacherEmailMessage,
@@ -12,6 +13,9 @@ export const TEACHERS_URL = "/api/teachers"
 export const CLASSES_URL = "/api/classes"
 
 const HTTP_CREATED = 201
+const HTTP_NO_CONTENT = 204
+const HTTP_NOT_FOUND = 404
+const HTTP_CONFLICT = 409
 const HTTP_BAD_REQUEST = 400
 const HTTP_BAD_GATEWAY = 502
 
@@ -33,12 +37,34 @@ function errorReply(status: number, error: string) {
   return HttpResponse.json({ error }, { status })
 }
 
+function sameEmail(left: string, right: string): boolean {
+  return left.toLowerCase() === right.toLowerCase()
+}
+
+function emailParam(params: Record<string, string | readonly string[] | undefined>, name: string) {
+  const value = params[name]
+  return typeof value === "string" ? value : ""
+}
+
 function firstIssueMessage(issues: readonly { message: string }[]): string {
   return issues.map((issue) => issue.message).join("; ")
 }
 
 export const handlers = [
   http.get(TEACHERS_URL, () => HttpResponse.json({ data: store.teachers })),
+
+  http.delete(`${TEACHERS_URL}/:email`, ({ params }) => {
+    const email = emailParam(params, "email")
+    if (store.classes.some((schoolClass) => sameEmail(schoolClass.formTeacher.email, email))) {
+      return errorReply(HTTP_CONFLICT, TEACHER_IS_FORM_TEACHER_MESSAGE)
+    }
+    const remaining = store.teachers.filter((teacher) => !sameEmail(teacher.email, email))
+    if (remaining.length === store.teachers.length) {
+      return errorReply(HTTP_NOT_FOUND, unknownTeacherEmailMessage(email))
+    }
+    store.teachers = remaining
+    return new HttpResponse(null, { status: HTTP_NO_CONTENT })
+  }),
 
   http.post(TEACHERS_URL, async ({ request }) => {
     const parsed = createTeacherRequestSchema.safeParse(await request.json())

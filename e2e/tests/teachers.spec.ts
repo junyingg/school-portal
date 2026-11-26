@@ -71,3 +71,17 @@ test("shows the empty state (stubbed API)", async ({ page }) => {
   await expect(card.getByRole("button", { name: "Add Teacher" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Add Teacher" })).toHaveCount(1)
 })
+
+test("deletes a teacher who has no class", async ({ page, request }, testInfo) => {
+  const teacher = uniqueTeacher(testInfo)
+  const seeded = await request.post("/api/teachers", { data: teacher })
+  expect(seeded.status()).toBe(201)
+
+  await page.goto("/teachers")
+  await page.getByRole("button", { name: `Delete ${teacher.name}` }).click()
+  const dialog = page.getByRole("dialog", { name: "Delete teacher?" })
+  await dialog.getByRole("button", { name: "Delete" }).click()
+
+  await expect(dialog).toBeHidden()
+  await expect(page.getByRole("row").filter({ hasText: teacher.email })).toHaveCount(0)
+})
