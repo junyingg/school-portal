@@ -17,6 +17,7 @@ function fakeTeacherRepository(findByEmail: TeacherRepository["findByEmail"]): T
     insert: () => Promise.reject(new Error("insert not expected")),
     listInInsertionOrder: () => Promise.resolve([]),
     findByEmail,
+    deleteByEmail: () => Promise.reject(new Error("delete not expected")),
   }
 }
 

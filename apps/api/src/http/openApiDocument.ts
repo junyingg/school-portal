@@ -11,7 +11,11 @@ function unavailable(): Promise<never> {
 }
 
 const UNAVAILABLE_SERVICES: AppServices = {
-  teacherService: { registerTeacher: unavailable, listTeachers: unavailable },
+  teacherService: {
+    registerTeacher: unavailable,
+    listTeachers: unavailable,
+    deleteTeacher: unavailable,
+  },
   classService: { addClass: unavailable, listClasses: unavailable },
 }
 

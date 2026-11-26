@@ -8,7 +8,11 @@ import {
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
 } from "@school-portal/contract"
 import { hasZodFastifySchemaValidationErrors } from "fastify-type-provider-zod"
-import { UnknownTeacherEmailError } from "./domainErrors.ts"
+import {
+  TeacherIsFormTeacherError,
+  TeacherNotFoundError,
+  UnknownTeacherEmailError,
+} from "./domainErrors.ts"
 import { conflictMessageFor, isUniqueViolation } from "./postgresErrors.ts"
 import { toValidationMessage } from "./validationMessage.ts"
 
@@ -19,6 +23,7 @@ export interface ErrorReply {
 }
 
 const HTTP_BAD_REQUEST = 400
+const HTTP_NOT_FOUND = 404
 const HTTP_CONFLICT = 409
 const HTTP_PAYLOAD_TOO_LARGE = 413
 const HTTP_UNSUPPORTED_MEDIA_TYPE = 415
@@ -48,6 +53,23 @@ const FASTIFY_BODY_ERROR_REPLIES = new Map<string, ErrorReply>([
   ],
   ["FST_ERR_CTP_BODY_TOO_LARGE", clientFault(HTTP_PAYLOAD_TOO_LARGE, BODY_TOO_LARGE_MESSAGE)],
 ])
+
+type DomainErrorType = new (email: string) => Error
+
+const DOMAIN_ERROR_STATUSES: readonly (readonly [DomainErrorType, number])[] = [
+  [UnknownTeacherEmailError, HTTP_BAD_REQUEST],
+  [TeacherNotFoundError, HTTP_NOT_FOUND],
+  [TeacherIsFormTeacherError, HTTP_CONFLICT],
+]
+
+function domainErrorReply(error: object): ErrorReply | undefined {
+  for (const [ErrorType, statusCode] of DOMAIN_ERROR_STATUSES) {
+    if (error instanceof ErrorType) {
+      return clientFault(statusCode, error.message)
+    }
+  }
+  return undefined
+}
 
 function isObject(value: unknown): value is object {
   return typeof value === "object" && value !== null
@@ -82,8 +104,9 @@ export function mapErrorToReply(error: unknown): ErrorReply {
     return clientFault(HTTP_BAD_REQUEST, toValidationMessage(error.validation))
   }
 
-  if (error instanceof UnknownTeacherEmailError) {
-    return clientFault(HTTP_BAD_REQUEST, error.message)
+  const domainReply = domainErrorReply(error)
+  if (domainReply !== undefined) {
+    return domainReply
   }
 
   const code = errorCodeOf(error)

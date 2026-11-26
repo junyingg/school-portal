@@ -2,7 +2,7 @@ import { METHOD_NOT_ALLOWED_MESSAGE } from "@school-portal/contract"
 import type { FastifyInstance, HTTPMethods } from "fastify"
 
 const HTTP_METHOD_NOT_ALLOWED = 405
-const UNSUPPORTED_METHODS: HTTPMethods[] = ["PUT", "PATCH", "DELETE"]
+const ROUTED_METHODS: readonly HTTPMethods[] = ["GET", "POST", "PUT", "PATCH", "DELETE"]
 
 function allowHeaderFor(allowedMethods: readonly HTTPMethods[]): string {
   const servesHead = allowedMethods.includes("GET")
@@ -16,8 +16,9 @@ export function registerMethodNotAllowed(
   allowedMethods: readonly HTTPMethods[],
 ): void {
   const allowHeader = allowHeaderFor(allowedMethods)
+  const unsupportedMethods = ROUTED_METHODS.filter((method) => !allowedMethods.includes(method))
   app.route({
-    method: UNSUPPORTED_METHODS,
+    method: unsupportedMethods,
     url,
     schema: { hide: true },
     handler: (_request, reply) =>

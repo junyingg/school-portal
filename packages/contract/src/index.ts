@@ -10,6 +10,7 @@ export {
   RESOURCE_EXISTS_MESSAGE,
   SERVICE_UNAVAILABLE_MESSAGE,
   TEACHER_EMAIL_TAKEN_MESSAGE,
+  TEACHER_IS_FORM_TEACHER_MESSAGE,
   UNSUPPORTED_MEDIA_TYPE_MESSAGE,
   unknownTeacherEmailMessage,
 } from "./errorMessages.ts"
@@ -45,8 +46,10 @@ export {
 export {
   createTeacherRequestSchema,
   teacherListResponseSchema,
+  teacherPathParamsSchema,
   teacherSchema,
   type CreateTeacherRequest,
   type Teacher,
   type TeacherListResponse,
+  type TeacherPathParams,
 } from "./teacher.ts"

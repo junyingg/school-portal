@@ -1,6 +1,9 @@
 import type { CreateTeacherRequest } from "@school-portal/contract"
-import type { Kysely } from "kysely"
+import type { ExpressionBuilder, Kysely } from "kysely"
+import { CLASSES_FORM_TEACHER_ID_FKEY } from "../../db/constraintNames.ts"
 import type { Database } from "../../db/database.ts"
+import { TeacherIsFormTeacherError } from "../../errors/domainErrors.ts"
+import { isRestrictViolationOn } from "../../errors/postgresErrors.ts"
 
 export interface TeacherRecord {
   readonly id: number
@@ -14,6 +17,7 @@ export interface TeacherRepository {
   insert(teacher: CreateTeacherRequest): Promise<TeacherRecord>
   listInInsertionOrder(): Promise<TeacherRecord[]>
   findByEmail(email: string): Promise<TeacherRecord | undefined>
+  deleteByEmail(email: string): Promise<boolean>
 }
 
 const TEACHER_COLUMNS = [
@@ -23,6 +27,11 @@ const TEACHER_COLUMNS = [
   "email",
   "contact_number as contactNumber",
 ] as const
+
+function hasEmail(email: string) {
+  return (eb: ExpressionBuilder<Database, "teachers">) =>
+    eb(eb.fn<string>("lower", ["email"]), "=", eb.fn<string>("lower", [eb.val(email)]))
+}
 
 export function createTeacherRepository(db: Kysely<Database>): TeacherRepository {
   return {
@@ -47,10 +56,20 @@ export function createTeacherRepository(db: Kysely<Database>): TeacherRepository
       return db
         .selectFrom("teachers")
         .select(TEACHER_COLUMNS)
-        .where((eb) =>
-          eb(eb.fn<string>("lower", ["email"]), "=", eb.fn<string>("lower", [eb.val(email)])),
-        )
+        .where(hasEmail(email))
         .executeTakeFirst()
+    },
+
+    async deleteByEmail(email) {
+      try {
+        const result = await db.deleteFrom("teachers").where(hasEmail(email)).executeTakeFirst()
+        return result.numDeletedRows > 0n
+      } catch (error) {
+        if (isRestrictViolationOn(error, CLASSES_FORM_TEACHER_ID_FKEY)) {
+          throw new TeacherIsFormTeacherError(email)
+        }
+        throw error
+      }
     },
   }
 }
