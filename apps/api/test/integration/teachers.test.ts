@@ -55,12 +55,8 @@ describe("POST /api/teachers", () => {
     expect([first.statusCode, second.statusCode]).toEqual([201, 201])
   })
 
-  it("accepts a contact number that does not start with 6", async () => {
-    const response = await postJson(
-      testApp.app,
-      TEACHERS_PATH,
-      aTeacherRequest({ contactNumber: "91234567" }),
-    )
+  it.each(["81234567", "91234567"])("accepts the mobile number %s", async (contactNumber) => {
+    const response = await postJson(testApp.app, TEACHERS_PATH, aTeacherRequest({ contactNumber }))
 
     expect(response.statusCode).toBe(201)
   })
@@ -77,8 +73,9 @@ describe("POST /api/teachers", () => {
   })
 
   it.each([
-    ["6123 4567", "contactNumber must be 8 digits"],
-    ["6123-4567", "contactNumber must be 8 digits"],
+    ["6123 4567", "contactNumber must be 8 digits starting with 6, 8 or 9"],
+    ["6123-4567", "contactNumber must be 8 digits starting with 6, 8 or 9"],
+    ["71234567", "contactNumber must be 8 digits starting with 6, 8 or 9"],
     [68129414, "contactNumber must be a string"],
   ])("rejects the contact number %j", async (contactNumber, message) => {
     const response = await postJson(testApp.app, TEACHERS_PATH, aTeacherRequest({ contactNumber }))

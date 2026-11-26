@@ -34,7 +34,7 @@ test("shows the email and contact errors together and sends nothing", async ({
   await page.getByRole("textbox", { name: "Name" }).fill(teacher.name)
   await choose(page, "Subject", "English Language")
   await page.getByRole("textbox", { name: "Email Address" }).fill("teacher@gov")
-  await page.getByRole("textbox", { name: "Work Contact Number" }).fill("9283 9999")
+  await page.getByRole("textbox", { name: "Work Contact Number" }).fill("7283 9999")
   await page.getByRole("button", { name: "Add Teacher" }).click()
 
   await expect(fieldNamed(page, "Email Address")).toContainText("This email address is invalid.")

@@ -24,7 +24,7 @@ function emailOfLength(length: number): string {
 
 describe("CONTACT_NUMBER_PATTERN", () => {
   it("is the API rule", () => {
-    expect(CONTACT_NUMBER_PATTERN.source).toBe("^\\d{8}$")
+    expect(CONTACT_NUMBER_PATTERN.source).toBe("^[689]\\d{7}$")
   })
 })
 
@@ -44,6 +44,10 @@ describe("contactNumberField", () => {
     "612345678",
     "6123456a",
     "6123-4567",
+    "71234567",
+    "31234567",
+    "12345678",
+    "01234567",
     "６１２３４５６７",
   ])("rejects %s", (value) => {
     expect(issueMessages(contactNumberField(), value)).toEqual([CONTACT_NUMBER_MESSAGE])
@@ -62,7 +66,7 @@ describe("contactNumberField", () => {
 
 describe("message constants", () => {
   it("hold their exact text", () => {
-    expect(CONTACT_NUMBER_MESSAGE).toBe("contactNumber must be 8 digits")
+    expect(CONTACT_NUMBER_MESSAGE).toBe("contactNumber must be 8 digits starting with 6, 8 or 9")
     expect(SUBJECT_NOT_LISTED_MESSAGE).toBe(
       "subject must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education",
     )

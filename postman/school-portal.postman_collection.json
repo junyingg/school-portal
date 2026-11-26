@@ -165,7 +165,7 @@
           }
         },
         {
-          "name": "POST a contact number that does not start with 6",
+          "name": "POST a mobile number starting with 9",
           "event": [
             {
               "listen": "test",
@@ -389,6 +389,44 @@
             "body": {
               "mode": "raw",
               "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"6123 4567\"}"
+            }
+          }
+        },
+        {
+          "name": "POST a contact number starting with 7",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error is contactNumberMessage\", () => pm.expect(pm.response.json().error).to.eql(pm.collectionVariables.get(\"contactNumberMessage\")));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/teachers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "teachers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Mary\",\"subject\":\"Mathematics\",\"email\":\"{{nobodyEmail}}\",\"contactNumber\":\"71234567\"}"
             }
           }
         },
@@ -1095,6 +1133,10 @@
     {
       "key": "levelNotListedMessage",
       "value": "level must be one of: Primary 1, Primary 2, Primary 3, Primary 4, Primary 5, Primary 6"
+    },
+    {
+      "key": "contactNumberMessage",
+      "value": "contactNumber must be 8 digits starting with 6, 8 or 9"
     }
   ]
 }
