@@ -85,3 +85,18 @@ test("shows the no-teachers prompts with readable text and a valid option list",
   expect(closedViolations).toEqual([])
   expect(openViolations).toEqual([])
 })
+
+test("has no automatically detectable WCAG A/AA violations in the delete dialogs", async ({
+  page,
+}) => {
+  for (const [path, buttonName] of [
+    ["/teachers", "Delete Hannah Low"],
+    ["/classes", "Delete Class 1A"],
+  ] as const) {
+    await page.goto(path)
+    await page.getByRole("button", { name: buttonName }).click()
+    await expect(page.getByRole("dialog")).toBeVisible()
+
+    expect(await violationsFrom(new AxeBuilder({ page }).withTags(WCAG_A_AND_AA))).toEqual([])
+  }
+})
