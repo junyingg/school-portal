@@ -6,16 +6,25 @@ The reasoning, the code walk-through and a requirement-by-requirement map are un
 
 ## Hosted links
 
-Not deployed. The app runs locally with Docker; see [Quick start](#quick-start).
+Not deployed. The app runs locally with Docker; see [Run it locally](#run-it-locally).
 
-## Prerequisites
+## Run it locally
 
-- **Node.js 24.0 or newer, below 27**, and **pnpm 12.21.0**. The repository pins 26.13.1 in `.node-version` and `mise.toml`; CI's static job runs both 24.21.0 and 26.13.1, and the integration and stack jobs use 26.13.1. The Docker images use Node 26.
-  - With [mise](https://mise.jdx.dev): `mise install`.
-  - Without mise: install Node.js 24 or newer, then `npm install --global pnpm@12.21.0`.
-- **Docker** with Compose v2. On macOS, Colima or Docker Desktop both work. With Colima, clone the repository under your home directory: Colima shares only `~` with its VM by default, and the stack bind-mounts the PostgreSQL roles script from the repository.
+Four steps: install the tools, start the stack, check it works, stop it. A first run takes a few minutes, mostly Docker building the images.
 
-## Quick start
+### 1. Install the prerequisites
+
+| Tool                   | Version                                | Check with               | Install                                                       |
+| ---------------------- | -------------------------------------- | ------------------------ | ------------------------------------------------------------- |
+| Node.js                | 24 or 26 (the repository pins 26.13.1) | `node --version`         | `mise install` reads `mise.toml`; or download from nodejs.org |
+| pnpm                   | 12.21.0                                | `pnpm --version`         | `npm install --global pnpm@12.21.0` (or `mise install`)       |
+| Docker with Compose v2 | Docker Desktop, or Colima on macOS     | `docker compose version` | docker.com, or `brew install colima docker docker-compose`    |
+
+Docker must be running before step 2 (open Docker Desktop, or run `colima start`). With Colima, keep the repository under your home directory: Colima shares only `~` with its virtual machine by default, and the stack mounts the database roles script from the repository.
+
+### 2. Start the stack
+
+From the repository root:
 
 ```sh
 pnpm install
@@ -23,31 +32,80 @@ pnpm env:init
 pnpm stack:up
 ```
 
+| Command         | What it does                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm install`  | Installs every package's dependencies from the lockfile                                                                                          |
+| `pnpm env:init` | Writes `.env` with random database passwords. It refuses to overwrite an existing `.env`                                                         |
+| `pnpm stack:up` | Builds the API and web images, starts PostgreSQL, runs the database migrations once, starts the API and nginx, and returns when they are healthy |
+
+### 3. Check it works
+
 - Web app: http://localhost:8080
 - API: http://localhost:8080/api
 
-`pnpm env:init` writes `.env` with random database passwords and refuses to overwrite an existing one. `pnpm stack:up` builds both images, starts PostgreSQL, runs the migration once, then starts the API and the web server and waits until PostgreSQL and the API are healthy and the web server is running. `pnpm stack:down` stops the stack and deletes its data volume.
+```sh
+curl http://localhost:8080/api/teachers
+```
 
-If Node.js 24+ is available but pnpm is not, the built stack needs only the host-side environment file:
+returns `{"data":[]}` on a fresh database. To add a teacher from the command line:
+
+```sh
+curl -X POST http://localhost:8080/api/teachers \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Mary","subject":"Mathematics","email":"teachermary@gmail.com","contactNumber":"68129414"}'
+```
+
+### 4. Stop or reset
+
+| To                         | Run                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Stop and delete all data   | `pnpm stack:down`                                                                                                                                      |
+| Stop but keep the data     | `docker compose stop`, then `pnpm stack:up` to start again                                                                                             |
+| Use another port than 8080 | set `WEB_PORT` in `.env`, then `pnpm stack:up`                                                                                                         |
+| Generate new passwords     | `pnpm stack:down`, delete `.env`, `pnpm env:init`, `pnpm stack:up` (the database keeps the passwords it was created with, so it must be deleted first) |
+
+### Without pnpm
+
+If Node.js 24 or newer is installed but pnpm is not, the stack needs only the environment file:
 
 ```sh
 node scripts/initEnv.ts
 docker compose up --build --wait
 ```
 
-Set `WEB_PORT` in `.env` if port 8080 is taken.
+### Local development with live reload
 
-## Local development
+1. Run `pnpm install` and `pnpm env:init` once, as in step 2.
+2. Start only PostgreSQL and the migrations. This also publishes PostgreSQL on `127.0.0.1:5432`:
 
-```sh
-docker compose -f compose.yaml -f compose.dev.yaml up -d postgres migrate
-pnpm dev
-```
+   ```sh
+   docker compose -f compose.yaml -f compose.dev.yaml up -d postgres migrate
+   ```
 
-- Web app: http://localhost:5173 (Vite; it proxies `/api` to the API)
+3. Start the API and the web app with live reload:
+
+   ```sh
+   pnpm dev
+   ```
+
+- Web app: http://localhost:5173 (Vite forwards `/api` to the API)
 - API: http://localhost:3000
 
-The dev override publishes PostgreSQL on `127.0.0.1:5432` only. The API reads `.env` from the repository root.
+The API reads `.env` from the repository root. Stop `pnpm dev` with Ctrl+C.
+
+### Troubleshooting
+
+| Symptom                                                                         | Cause                                                                           | Fix                                                                                                                          |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm stack:up` stops with `run pnpm env:init first`                            | There is no `.env`                                                              | `pnpm env:init`                                                                                                              |
+| `pnpm env:init` says `.env already exists`                                      | It never overwrites passwords                                                   | Keep it, or follow "Generate new passwords" above                                                                            |
+| Docker cannot connect to its daemon                                             | Docker is not running                                                           | Start Docker Desktop, or `colima start`                                                                                      |
+| Docker reports that port 8080 is already allocated                              | Another program uses the port                                                   | Set `WEB_PORT=8081` in `.env` and run `pnpm stack:up`; change `baseUrl` in `postman/local.postman_environment.json` to match |
+| The `migrate` service fails with `password authentication failed`               | `.env` was regenerated after the database was created                           | `pnpm stack:down`, then `pnpm stack:up`                                                                                      |
+| The `migrate` service fails with `role "school_portal_migrator" does not exist` | With Colima, the repository is outside `~`, so the roles script was not mounted | Move the repository under your home directory, then `pnpm stack:down` and `pnpm stack:up`                                    |
+| `pnpm install` refuses to run                                                   | The Node.js or pnpm version is outside the supported range                      | Install the versions in step 1                                                                                               |
+
+For service logs, run `docker compose logs api` (or `postgres`, `migrate`, `web`).
 
 ## API
 
