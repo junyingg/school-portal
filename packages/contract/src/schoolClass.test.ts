@@ -5,6 +5,7 @@ import { LEVEL_NOT_LISTED_MESSAGE } from "./fieldRules.ts"
 import { CLASS_LEVELS } from "./optionLists.ts"
 import {
   classListResponseSchema,
+  classPathParamsSchema,
   createClassRequestSchema,
   schoolClassSchema,
 } from "./schoolClass.ts"
@@ -121,5 +122,21 @@ describe("schoolClassSchema as JSON Schema", () => {
         formTeacher: { type: "object", required: ["name", "email"], additionalProperties: false },
       },
     })
+  })
+})
+
+describe("classPathParamsSchema", () => {
+  it("accepts the form teacher's email and trims it", () => {
+    expect(classPathParamsSchema.parse({ teacherEmail: " teachermary@gmail.com " })).toStrictEqual({
+      teacherEmail: "teachermary@gmail.com",
+    })
+  })
+
+  it("rejects a malformed email", () => {
+    const result = classPathParamsSchema.safeParse({ teacherEmail: "mary" })
+
+    expect(result.success ? [] : result.error.issues.map((issue) => issue.message)).toEqual([
+      "teacherEmail must be a valid email address",
+    ])
   })
 })

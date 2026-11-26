@@ -143,13 +143,13 @@ describe.each(POST_PATHS)("unsupported methods on %s", (path) => {
   )
 })
 
-describe("unsupported methods on a teacher", () => {
+describe.each([TEACHERS_PATH, CLASSES_PATH])("unsupported methods on one item of %s", (path) => {
   it.each(["GET", "POST", "PUT", "PATCH"] as const)(
     "replies 405 to %s with an Allow header",
     async (method) => {
       const response = await testApp.app.inject({
         method,
-        url: `${TEACHERS_PATH}/teachermary%40gmail.com`,
+        url: `${path}/teachermary%40gmail.com`,
       })
 
       expectJsonError(response, 405, "Method not allowed")

@@ -1,6 +1,6 @@
 import { SPEC_CLASSES, SPEC_CREATE_CLASS_REQUEST, SPEC_TEACHERS } from "@school-portal/contract"
 import { describe, expect, it, vi } from "vitest"
-import { UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
+import { ClassNotFoundError, UnknownTeacherEmailError } from "../../errors/domainErrors.ts"
 import type { TeacherRecord, TeacherRepository } from "../teachers/teacherRepository.ts"
 import type { ClassRepository, ClassWithFormTeacherRecord } from "./classRepository.ts"
 import { createClassService } from "./classService.ts"
@@ -24,8 +24,10 @@ function fakeTeacherRepository(findByEmail: TeacherRepository["findByEmail"]): T
 function fakeClassRepository(
   insert: ClassRepository["insert"],
   listInInsertionOrder: ClassRepository["listInInsertionOrder"] = () => Promise.resolve([]),
+  deleteByFormTeacherEmail: ClassRepository["deleteByFormTeacherEmail"] = () =>
+    Promise.resolve(false),
 ): ClassRepository {
-  return { insert, listInInsertionOrder }
+  return { insert, listInInsertionOrder, deleteByFormTeacherEmail }
 }
 
 const [CLASS_1A, CLASS_2B] = SPEC_CLASSES
@@ -105,5 +107,40 @@ describe("listClasses", () => {
       { ...CLASS_2B, formTeacher: { name: "Ken", email: "teacherken@gmail.com" } },
       { ...CLASS_1A, formTeacher: { name: "Mary", email: "teachermary@gmail.com" } },
     ])
+  })
+})
+
+describe("deleteClass", () => {
+  function serviceDeletingWith(
+    deleteByFormTeacherEmail: ClassRepository["deleteByFormTeacherEmail"],
+  ) {
+    return createClassService({
+      teacherRepository: fakeTeacherRepository(() => Promise.resolve(undefined)),
+      classRepository: fakeClassRepository(
+        () => Promise.resolve(),
+        () => Promise.resolve([]),
+        deleteByFormTeacherEmail,
+      ),
+    })
+  }
+
+  it("deletes the class whose form teacher has the email", async () => {
+    const deleteByFormTeacherEmail = vi
+      .fn<ClassRepository["deleteByFormTeacherEmail"]>()
+      .mockResolvedValue(true)
+
+    await expect(
+      serviceDeletingWith(deleteByFormTeacherEmail).deleteClass("TeacherMary@Gmail.com"),
+    ).resolves.toBeUndefined()
+    expect(deleteByFormTeacherEmail).toHaveBeenCalledExactlyOnceWith("TeacherMary@Gmail.com")
+  })
+
+  it("rejects an email whose teacher has no class", async () => {
+    const deletion = serviceDeletingWith(() => Promise.resolve(false)).deleteClass("x@y.co")
+
+    await expect(deletion).rejects.toBeInstanceOf(ClassNotFoundError)
+    await expect(deletion).rejects.toMatchObject({
+      message: "No class found with form teacher email x@y.co",
+    })
   })
 })

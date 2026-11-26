@@ -3,6 +3,7 @@ import { errorCodes } from "fastify"
 import { validatorCompiler } from "fastify-type-provider-zod"
 import { describe, expect, it } from "vitest"
 import {
+  ClassNotFoundError,
   TeacherIsFormTeacherError,
   TeacherNotFoundError,
   UnknownTeacherEmailError,
@@ -156,6 +157,11 @@ const CASES: MappingCase[] = [
     description: "a teacher who is still a form teacher",
     input: new TeacherIsFormTeacherError("x@y.co"),
     expected: clientFault(409, "Teacher is the form teacher of a class and cannot be deleted"),
+  },
+  {
+    description: "a class that does not exist",
+    input: new ClassNotFoundError("x@y.co"),
+    expected: clientFault(404, "No class found with form teacher email x@y.co"),
   },
 ]
 

@@ -20,6 +20,7 @@ describe("generateOpenApiDocument", () => {
       "/api/teachers",
       "/api/teachers/{email}",
       "/api/classes",
+      "/api/classes/{teacherEmail}",
     ])
   })
 
@@ -29,6 +30,22 @@ describe("generateOpenApiDocument", () => {
     expect(Object.keys(document.paths["/api/teachers"] ?? {})).toEqual(["post", "get"])
     expect(Object.keys(document.paths["/api/teachers/{email}"] ?? {})).toEqual(["delete"])
     expect(Object.keys(document.paths["/api/classes"] ?? {})).toEqual(["post", "get"])
+    expect(Object.keys(document.paths["/api/classes/{teacherEmail}"] ?? {})).toEqual(["delete"])
+  })
+
+  it("describes deleting a class: the form teacher's email in the path, 204, and the error replies", async () => {
+    const document = await generatedDocument()
+    const deletion = document.paths["/api/classes/{teacherEmail}"]?.["delete"]
+
+    expect(deletion).toMatchObject({
+      parameters: [{ in: "path", name: "teacherEmail", required: true }],
+    })
+    expect(Object.keys((deletion as { responses: object }).responses)).toEqual([
+      "204",
+      "400",
+      "404",
+      "500",
+    ])
   })
 
   it("describes deleting a teacher: the email in the path, 204, and the error replies", async () => {

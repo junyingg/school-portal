@@ -5,6 +5,7 @@ import {
   CLASSES_PATH,
   TEACHERS_PATH,
   aClassRequest,
+  deleteResource,
   getJson,
   postJson,
 } from "./support/requests.ts"
@@ -140,5 +141,57 @@ describe("GET /api/classes", () => {
     const response = await getJson(testApp.app, CLASSES_PATH)
 
     expect(response.json()).toStrictEqual({ data: [] })
+  })
+})
+
+describe("DELETE /api/classes/{teacherEmail}", () => {
+  it("deletes the form teacher's class regardless of email case and replies 204", async () => {
+    await postJson(testApp.app, CLASSES_PATH, aClassRequest())
+
+    const response = await deleteResource(testApp.app, `${CLASSES_PATH}/TEACHERMARY%40GMAIL.COM`)
+
+    expect(response.statusCode).toBe(204)
+    expect(response.body).toBe("")
+    expect((await getJson(testApp.app, CLASSES_PATH)).json()).toStrictEqual({ data: [] })
+  })
+
+  it("frees the teacher to take another class or be deleted", async () => {
+    await postJson(testApp.app, CLASSES_PATH, aClassRequest())
+    await deleteResource(testApp.app, `${CLASSES_PATH}/${MARY.email}`)
+
+    const reassigned = await postJson(
+      testApp.app,
+      CLASSES_PATH,
+      aClassRequest({ level: "Primary 2", name: "Class 2B" }),
+    )
+    await deleteResource(testApp.app, `${CLASSES_PATH}/${MARY.email}`)
+    const teacherDeletion = await deleteResource(testApp.app, `${TEACHERS_PATH}/${MARY.email}`)
+
+    expect(reassigned.statusCode).toBe(201)
+    expect(teacherDeletion.statusCode).toBe(204)
+  })
+
+  it.each([
+    ["a teacher with no class", KEN.email],
+    ["an email that matches no teacher", "nobody@example.com"],
+  ])("replies 404 for %s", async (_case, email) => {
+    await postJson(testApp.app, CLASSES_PATH, aClassRequest())
+
+    const response = await deleteResource(testApp.app, `${CLASSES_PATH}/${email}`)
+
+    expect(response.statusCode).toBe(404)
+    expect(response.json()).toStrictEqual({
+      error: `No class found with form teacher email ${email}`,
+    })
+    expect((await getJson(testApp.app, CLASSES_PATH)).json()).toMatchObject({
+      data: [{ name: "Class 1A" }],
+    })
+  })
+
+  it("rejects a malformed email with 400", async () => {
+    const response = await deleteResource(testApp.app, `${CLASSES_PATH}/mary`)
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toStrictEqual({ error: "teacherEmail must be a valid email address" })
   })
 })
