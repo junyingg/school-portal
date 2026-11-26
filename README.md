@@ -169,8 +169,14 @@ Every API request and response body is JSON. Every API response, including error
 `201 Created`:
 
 ```json
-{ "level": "Primary 1", "name": "Class 1A", "formTeacher": { "name": "Mary" } }
+{
+  "level": "Primary 1",
+  "name": "Class 1A",
+  "formTeacher": { "name": "Mary", "email": "teachermary@gmail.com" }
+}
 ```
+
+`formTeacher.email` is not in the specification's example. It is added so that a client can address the class for deletion (see below); it is the teacher's email as stored.
 
 ### List classes
 
@@ -179,13 +185,37 @@ Every API request and response body is JSON. Every API response, including error
 ```json
 {
   "data": [
-    { "level": "Primary 1", "name": "Class 1A", "formTeacher": { "name": "Mary" } },
-    { "level": "Primary 2", "name": "Class 2B", "formTeacher": { "name": "Ken" } }
+    {
+      "level": "Primary 1",
+      "name": "Class 1A",
+      "formTeacher": { "name": "Mary", "email": "teachermary@gmail.com" }
+    },
+    {
+      "level": "Primary 2",
+      "name": "Class 2B",
+      "formTeacher": { "name": "Ken", "email": "teacherken@gmail.com" }
+    }
   ]
 }
 ```
 
 An empty list is `{ "data": [] }`.
+
+### Delete a teacher
+
+`DELETE /api/teachers/{email}` deletes the teacher with that email (case-insensitive) and returns `204 No Content` with no body. A teacher who is still a form teacher cannot be deleted: delete the class first.
+
+```sh
+curl -X DELETE http://localhost:8080/api/teachers/teacherken@gmail.com
+```
+
+### Delete a class
+
+`DELETE /api/classes/{teacherEmail}` deletes the class whose form teacher has that email and returns `204 No Content`. A class is addressed by its form teacher because each teacher has at most one class, while a class's level and name are not unique. The teacher can then take another class or be deleted.
+
+```sh
+curl -X DELETE http://localhost:8080/api/classes/teachermary@gmail.com
+```
 
 ### Errors
 
@@ -199,13 +229,18 @@ Every error body is `{ "error": "<message>" }`. Each invalid field reports its f
 | Subject not in the list                                                | 400    | `subject must be one of: English Language, …`                       |
 | Level not in the list                                                  | 400    | `level must be one of: Primary 1, …`                                |
 | Unknown `teacherEmail`                                                 | 400    | No teacher found with email `<email>`                               |
+| Malformed email in a delete path                                       | 400    | `email must be a valid email address` (or `teacherEmail …`)         |
+| Delete: no teacher has the email                                       | 404    | No teacher found with email `<email>`                               |
+| Delete: no class has a form teacher with the email                     | 404    | No class found with form teacher email `<email>`                    |
 | Body length does not match `Content-Length`                            | 400    | Request body size did not match Content-Length                      |
 | Teacher email already registered (case-insensitive)                    | 409    | A teacher with this email already exists                            |
 | Teacher is already a form teacher                                      | 409    | Teacher is already the form teacher of another class                |
+| Delete a teacher who is still a form teacher                           | 409    | Teacher is the form teacher of a class and cannot be deleted        |
 | Body over 16 KiB                                                       | 413    | Request body too large                                              |
 | Body sent with a non-JSON `Content-Type`                               | 415    | Content-Type must be application/json                               |
 | Unknown route                                                          | 404    | Not found                                                           |
-| `PUT`, `PATCH` or `DELETE` on either path                              | 405    | Method not allowed (with `Allow: GET, HEAD, POST`)                  |
+| `PUT`, `PATCH` or `DELETE` on `/api/teachers` or `/api/classes`        | 405    | Method not allowed (with `Allow: GET, HEAD, POST`)                  |
+| `GET`, `POST`, `PUT` or `PATCH` on one teacher or class                | 405    | Method not allowed (with `Allow: DELETE`)                           |
 | Any other server failure                                               | 500    | Internal server error (details are logged, never returned)          |
 
 The API does not define `OPTIONS`; with CORS off it returns the JSON `404`. `GET /api` without a trailing slash is served by nginx as a JSON `404` too.
@@ -220,7 +255,7 @@ nginx adds its own, in the same shape:
 
 ### OpenAPI
 
-`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It lists the allowed subject and level values; the API trims a value before matching it against the list. Router-level `404`/`405` responses are documented in the error table rather than on each operation, because they are not operation-level outcomes.
+`apps/api/openapi.json` is generated from the route schemas (`pnpm openapi:write`); CI fails if it is out of date. It lists the allowed subject and level values (the API trims a value before matching it against the list), the contact-number pattern, and both delete operations with their `204` and error replies. Router-level `404`/`405` responses are documented in the error table rather than on each operation, because they are not operation-level outcomes.
 
 ### Health
 
@@ -235,7 +270,7 @@ The API serves `GET /healthz` (the process is up) and `GET /readyz` (the databas
 | Unit and component with coverage thresholds | `pnpm test:coverage`    | nothing           | The same tests, failing below the coverage targets                                                                                                        |
 | API integration                             | `pnpm test:integration` | Docker            | Real PostgreSQL 18 (Testcontainers) as the restricted app role: exact bodies, case-insensitive uniqueness, constraint mapping, ten-way races, role grants |
 | Contract                                    | `pnpm test:contract`    | the running stack | The deployed stack through nginx with Newman: statuses, content type, JSON Schemas generated from the contract, error shape, nginx's JSON error pages     |
-| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows, the form-teacher conflict, responsive widths and a WCAG A/AA axe scan in Chromium (Playwright)                                           |
+| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows, deleting a class and a teacher, the form-teacher conflict, responsive widths and WCAG A/AA axe scans in Chromium (Playwright)            |
 
 `pnpm test` runs the unit and component layers. Before the first end-to-end run, install the browser with `pnpm -F @school-portal/e2e exec playwright install chromium`.
 
@@ -251,7 +286,7 @@ Static checks: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm audit:p
 
 ### Postman
 
-Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`. The environment's `baseUrl` is fixed at `http://localhost:8080`; change it there if you change `WEB_PORT`.
+Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database; its last folder deletes the class and teacher it created. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`. The environment's `baseUrl` is fixed at `http://localhost:8080`; change it there if you change `WEB_PORT`.
 
 ## Assumptions
 
@@ -261,7 +296,7 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 4. A teacher who is already a form teacher returns 409.
 5. A class's level and name together are not unique; only the form-teacher rule applies. See the suggestions below.
 6. Subject and level must come from the design's fixed lists; see [Rules added from the design](#rules-added-from-the-design-enforced).
-7. Contact number: the web form strips spaces and requires 8 digits starting with 6, matching the design's error example. The API requires 8 digits (surrounding spaces trimmed, inner spaces rejected) and does not enforce the leading 6, because that rule is inferred rather than documented.
+7. Contact number: 8 digits starting with 6, 8 or 9 (Singapore fixed-line and mobile numbers), in both the web form and the API. The form strips spaces first; the API trims surrounding spaces and rejects inner ones. The design's error example `9283 9999` is therefore accepted.
 8. Email uses a simple `local@domain.tld` check in both the form and the API. `teacher@gov.sg` is accepted, although the design's error example shows it as invalid.
 9. Length limits: 100 characters for a teacher name, 50 for a class name, 254 for an email.
 10. Lists are returned in insertion order, without pagination.
@@ -274,11 +309,15 @@ Import `postman/school-portal.postman_collection.json` and `postman/local.postma
 17. The Form Teacher dropdown lists every teacher, including those already assigned, because the API does not say who is assigned; the conflict appears on submit.
 18. There is no designed error state for Add Class; it follows the Add Teacher pattern.
 19. Migrations run as a separate step before the API starts. No seed data is provided.
-20. Update, delete and reassignment are not supported.
+20. Teachers and classes can be deleted; update and reassignment are not supported (to move a class to another teacher, delete it and add it again).
 21. Names may contain any Unicode except control characters.
 22. Rate limiting is done by nginx: 50 requests a second per address, with a burst of 200.
 23. The web app shows contact numbers as `6736 3939`; the API stores and returns eight digits.
 24. Add Class keeps a one-hour session draft. It survives the "Add a teacher" round trip and is cleared after a successful save or an explicit Back.
+25. A class is deleted through its form teacher's email, which is unique per class. Class responses therefore include `formTeacher.email`, which the specification's example omits.
+26. A teacher who is still a form teacher cannot be deleted (409); deleting a teacher never deletes a class.
+27. Deleting returns `204` with no body; deleting something that does not exist returns a JSON `404`.
+28. The web app asks for confirmation before each delete and shows the reason if the API refuses.
 
 ## Rules added from the design (enforced)
 
@@ -287,7 +326,7 @@ The specification lists no field rules. The linked Figma's documentation card do
 - **Subject** must be one of: English Language, Mother Tongue Language, Mathematics, Science, Art, Music, Physical Education, Social Studies, Character and Citizenship Education.
 - **Class level** must be one of: Primary 1 to Primary 6.
 - Both are trimmed and then matched exactly, so `mathematics` is rejected. The 400 message lists the allowed values.
-- **Contact number**: the web form also requires a leading 6, inferred from one error example in the design. The API does not, because that evidence is weak.
+- **Contact number** must be 8 digits starting with 6, 8 or 9, in the form and the API. This is the Singapore numbering rule for fixed-line (6) and mobile (8, 9) numbers, rather than the design's error example, which implies a leading 6 only.
 
 | For enforcing the lists in the API                                | Against                                                                                                          |
 | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -301,15 +340,14 @@ Every value in the specification's examples passes. Loosening the rules is a cha
 ## API design suggestions
 
 - Move the subject and level lists into lookup tables, so they can change without a deploy.
-- Accept mobile numbers if work contacts can be mobile.
 - Decide whether a class's level and name should be unique.
 - Return a `Location` header with each 201.
 - Add a stable machine-readable `code` next to `error`.
-- Include an `id` or `email` in `formTeacher`; names are not unique.
 - Show whether a teacher is already a form teacher, or offer `GET /api/teachers?available=true`, so the form can hide them.
 - Use 422 for requests that are well formed but break a business rule.
 - Add pagination with a `meta` object once lists grow.
-- Add `PUT` and `DELETE` for reassigning a form teacher.
+- Add `PATCH /api/classes/{teacherEmail}` to move a class to another form teacher in one step.
+- Give teachers and classes a stable public identifier, so neither has to be addressed by an email that could one day change.
 - Accept an `Idempotency-Key` header, so a retried POST cannot create a duplicate.
 
 ## Architecture and security
@@ -321,7 +359,7 @@ Browser ──► nginx :8080 ─┬─ /      static web app (React, Ant Design
 ```
 
 - **Rules that must survive concurrency live in the database.** A unique index on `lower(email)` and a unique `form_teacher_id` decide races, not check-then-insert. Class creation still looks up the teacher before inserting; the unique `form_teacher_id` index closes the race. A test fires ten requests at once and gets exactly one 201.
-- **Two database roles.** A migrator role owns the schema; the API connects as an app role that can only `SELECT` and `INSERT`.
+- **Two database roles.** A migrator role owns the schema; the API connects as an app role that can only `SELECT`, `INSERT` and `DELETE`.
 - **Migrations run as their own step**, never on API start-up.
 - **Input is validated at the edge** by the shared Zod contract. Queries are always parameterised (Kysely).
 - **Body limits**: 16 KiB in the API, 1 MiB in nginx. The API accepts JSON only.
