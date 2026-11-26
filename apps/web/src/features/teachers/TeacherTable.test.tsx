@@ -12,7 +12,7 @@ function cellTexts(row: HTMLElement): (string | null)[] {
 }
 
 describe("TeacherTable", () => {
-  it("shows the design headers, then Actions, without sort controls", () => {
+  it("shows the design headers, then an actions column named only for screen readers", () => {
     renderWithProviders(<TeacherTable teachers={designTeachers} onDelete={vi.fn()} />)
 
     const table = screen.getByRole("table", { name: "Teachers" })
@@ -23,9 +23,12 @@ describe("TeacherTable", () => {
       "Subject",
       "Email",
       "Work Contact",
-      "Actions",
+      "",
     ])
     expect(headers.flatMap((header) => within(header).queryAllByRole("button"))).toEqual([])
+    expect(
+      within(screen.getByRole("table")).getByRole("columnheader", { name: "Actions" }),
+    ).toHaveTextContent("")
   })
 
   it("numbers rows from 1 in insertion order and formats the contact number", () => {
@@ -39,7 +42,7 @@ describe("TeacherTable", () => {
       "English Language",
       "hannah.low@example.com",
       "6736 3939",
-      "Delete",
+      "",
     ])
     expect(cellTexts(rows[5] as HTMLElement).slice(0, 2)).toEqual(["6", "Chen Bing Bing"])
   })
@@ -54,5 +57,16 @@ describe("TeacherTable delete buttons", () => {
     await user.click(screen.getByRole("button", { name: "Delete Chen Bing Bing" }))
 
     expect(onDelete).toHaveBeenCalledExactlyOnceWith(designTeachers[5])
+  })
+
+  it("shows each Delete button as an icon with a Delete tooltip", async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<TeacherTable teachers={designTeachers} onDelete={vi.fn()} />)
+    const button = screen.getByRole("button", { name: "Delete Hannah Low" })
+
+    expect(button).toHaveTextContent("")
+    expect(button.querySelector(".anticon-delete")).not.toBeNull()
+    await user.hover(button)
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Delete")
   })
 })
