@@ -22,7 +22,7 @@ Why the stack, the repository layout and the validation rules are what they are,
 - Room to scale horizontally (more instances) and vertically (bigger instances), and a simple path to redundancy.
 - Tests written before the code, at every layer from single rules to a browser.
 
-**The tension behind most choices.** The app is small — four endpoints, five screens — and is meant to be read. So scalability lives in the architecture and deployment (a stateless API, a connection pool, health checks, rules enforced by the database), not in heavy frameworks. Anything that adds ceremony without paying for itself at this size was left out.
+**The tension behind most choices.** The app is small — four endpoints in the brief (six with the later deletes), five screens — and is meant to be read. So scalability lives in the architecture and deployment (a stateless API, a connection pool, health checks, rules enforced by the database), not in heavy frameworks. Anything that adds ceremony without paying for itself at this size was left out.
 
 Versions were read from the npm registry and nodejs.org on the day they were chosen, and peer-dependency ranges were checked, because they decide which versions can coexist.
 
@@ -77,12 +77,12 @@ The specification gives request examples but no field rules. The designs add som
 
 ### Response shape: exactly the specification's
 
-| Rule                                                                                       | Considered                    | Why                                                                                                            |
-| ------------------------------------------------------------------------------------------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Responses contain only the specification's fields, in its key order; no `id` or timestamps | Add `id` and timestamps       | A tool that compares whole bodies would fail on extra fields.                                                  |
-| An empty list is `{"data": []}`; lists are in insertion order                              | —                             | Matches the examples' shape; insertion order is the order the examples show.                                   |
-| `POST` returns `201` with the created item, flat                                           | An empty `201`; `{"data": …}` | The specification gives no body; returning the item helps clients and cannot fail a status check.              |
-| Unknown request fields are dropped                                                         | Reject them with `400`        | Cannot fail a client that sends extras, and still prevents mass assignment because only known fields are kept. |
+| Rule                                                                                                                                                                   | Considered                    | Why                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Responses contain only the specification's fields, in its key order; no `id` or timestamps. One later exception: `formTeacher` also carries the teacher's email (§ 12) | Add `id` and timestamps       | A tool that compares whole bodies would fail on extra fields.                                                  |
+| An empty list is `{"data": []}`; lists are in insertion order                                                                                                          | —                             | Matches the examples' shape; insertion order is the order the examples show.                                   |
+| `POST` returns `201` with the created item, flat                                                                                                                       | An empty `201`; `{"data": …}` | The specification gives no body; returning the item helps clients and cannot fail a status check.              |
+| Unknown request fields are dropped                                                                                                                                     | Reject them with `400`        | Cannot fail a client that sends extras, and still prevents mass assignment because only known fields are kept. |
 
 ### D1 — how strict the API is
 
@@ -90,15 +90,15 @@ This decision moved the most, because two goals pull against each other: followi
 
 1. **API lenient, form strict.** The failure is asymmetric: if the API rejects a value an automated client chose — an unlisted subject, a 9-prefixed number — that teacher's `POST` fails and so does every class request that needs the teacher.
 2. **Both strict.** Enforcing the design's rules at the API too gives one rule set, an API that cannot be bypassed with `curl`, allow-list validation, and clean data.
-3. **Lists strict, the leading 6 in the form only.** The rules have different strength of evidence. The subject and level lists are written in the designs' documentation card. The "starts with 6" contact rule is inferred from a single error frame, so it is the likeliest rule to be wrong, and it stays out of the API.
+3. **Lists strict, the leading 6 in the form only.** (The contact rule changed again later; see § 12.) The rules have different strength of evidence. The subject and level lists are written in the designs' documentation card. The "starts with 6" contact rule is inferred from a single error frame, so it is the likeliest rule to be wrong, and it stays out of the API.
 
 **In force:**
 
-| Field          | API                                            | Form                             |
-| -------------- | ---------------------------------------------- | -------------------------------- |
-| Subject        | one of the nine, exact match after trimming    | a select with the nine           |
-| Level          | Primary 1–6, exact match after trimming        | a select with the six            |
-| Contact number | trimmed, then `^\d{8}$`; inner spaces rejected | spaces stripped, then `^6\d{7}$` |
+| Field          | API                                                 | Form                                 |
+| -------------- | --------------------------------------------------- | ------------------------------------ |
+| Subject        | one of the nine, exact match after trimming         | a select with the nine               |
+| Level          | Primary 1–6, exact match after trimming             | a select with the six                |
+| Contact number | trimmed, then `^[689]\d{7}$`; inner spaces rejected | spaces stripped, then `^[689]\d{7}$` |
 
 A later change loosened this: the API accepted any subject or level up to a length limit and stripped inner spaces, and the form dropped the leading-6 rule. A review against the designs reversed it. With the looser form, the designs' own error example (`9283 9999`) was accepted, and the change contradicted the recorded decision without new evidence. The strict rules were restored, test first. The 400 message lists the allowed values, and `openapi.json` now lists them as an `enum` too.
 
@@ -165,23 +165,25 @@ Each fact is owned by the cheapest layer that can fail for the real reason; high
 
 ## 9. Left out on purpose
 
-Turborepo or Nx, NestJS, Prisma, TypeORM, GraphQL or tRPC (the specification fixes REST shapes), Redis, Kubernetes, OpenTelemetry, Swagger UI in production, pagination, authentication, edit and delete. Each adds weight that four endpoints do not need. Ideas for the API itself are in the README's "API design suggestions".
+Turborepo or Nx, NestJS, Prisma, TypeORM, GraphQL or tRPC (the specification fixes REST shapes), Redis, Kubernetes, OpenTelemetry, Swagger UI in production, pagination, authentication and editing. Each adds weight that four endpoints do not need. Ideas for the API itself are in the README's "API design suggestions".
 
 ## 10. Library behaviour checked at the source
 
 Each of these would have compiled and then silently done the wrong thing:
 
-| Finding                                                                                                     | Change                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| MSW 3 renamed `onUnhandledRequest` to `onUnhandledFrame`; the old key is ignored and the default only warns | `onUnhandledFrame: "error"`, so an unmocked request fails the test                                                                                                |
-| Fastify plugins are encapsulated                                                                            | The error handler, JSON-only parser and security plugins are wrapped with `fastify-plugin`, or they never reach the route plugins                                 |
-| TypeScript 6 needs explicit `rootDir` and `types`                                                           | Both are set in the build configs; otherwise output lands in `dist/src/` and the container cannot start                                                           |
-| PostgreSQL 15+ gives no `CREATE` on schema `public` by default                                              | The migrator role owns the database and schema; the app role's grants are in migration `0001`, because the tables do not exist when the init script runs          |
-| nginx's own error pages are HTML                                                                            | JSON `error_page` locations with an explicit charset                                                                                                              |
-| `@fastify/rate-limit` keys on `req.ip`, and `trustProxy` defaults to false                                  | Rate limiting moved to nginx                                                                                                                                      |
-| `newman@6.2.3` pins dependencies with high and critical advisories                                          | CI gates on `pnpm audit:prod`; the full audit runs without blocking                                                                                               |
-| Zod 4 length checks run on any input with a `length`, even after a type error                               | One validation message per field (§ 5)                                                                                                                            |
-| CSS Modules scope class names per file                                                                      | Responsive tab padding lives in `NavTab.module.css`, beside the class it styles; in `TopNav.module.css` it matched nothing and the nav overflowed a 320 px screen |
+| Finding                                                                                                        | Change                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MSW 3 renamed `onUnhandledRequest` to `onUnhandledFrame`; the old key is ignored and the default only warns    | `onUnhandledFrame: "error"`, so an unmocked request fails the test                                                                                                |
+| Fastify plugins are encapsulated                                                                               | The error handler, JSON-only parser and security plugins are wrapped with `fastify-plugin`, or they never reach the route plugins                                 |
+| TypeScript 6 needs explicit `rootDir` and `types`                                                              | Both are set in the build configs; otherwise output lands in `dist/src/` and the container cannot start                                                           |
+| PostgreSQL 15+ gives no `CREATE` on schema `public` by default                                                 | The migrator role owns the database and schema; the app role's grants are in migration `0001`, because the tables do not exist when the init script runs          |
+| nginx's own error pages are HTML                                                                               | JSON `error_page` locations with an explicit charset                                                                                                              |
+| `@fastify/rate-limit` keys on `req.ip`, and `trustProxy` defaults to false                                     | Rate limiting moved to nginx                                                                                                                                      |
+| `newman@6.2.3` pins dependencies with high and critical advisories                                             | CI gates on `pnpm audit:prod`; the full audit runs without blocking                                                                                               |
+| Zod 4 length checks run on any input with a `length`, even after a type error                                  | One validation message per field (§ 5)                                                                                                                            |
+| PostgreSQL reports `23001` (`restrict_violation`), not `23503`, when a delete hits an `ON DELETE RESTRICT` key | The teacher repository checks `23001` on `classes_form_teacher_id_fkey`; an insert-side violation stays `23503`, so the two cannot be confused                    |
+| axe measures colour contrast mid-animation, so a fading modal mask produces a false failure                    | The dialog scan waits until no animation is running                                                                                                               |
+| CSS Modules scope class names per file                                                                         | Responsive tab padding lives in `NavTab.module.css`, beside the class it styles; in `TopNav.module.css` it matched nothing and the nav overflowed a 320 px screen |
 
 One check was itself wrong and is kept as a lesson: Zod's `target: "draft-7"` looked like a bug from the type definitions, but the runtime aliases it to `"draft-07"`. Reading the typings instead of the code that runs is a wrong-layer check.
 
@@ -200,3 +202,38 @@ A review of the built app against the specification, the designs and these decis
 Kept as they were: the response shapes, D2, D3, D4 and the status codes.
 
 Known limits, not fixed: antd's empty `Select` still points `aria-activedescendant` at an option that does not exist, and its scrolling option list is not tab-focusable (keyboard users move through it with the arrow keys). Both come from the library and need an upstream fix or a custom combobox.
+
+## 12. Later changes: deleting, contact prefixes, the form teacher's email
+
+These were asked for after the review above. Each was built test first.
+
+### Contact numbers start with 6, 8 or 9, in the form and the API
+
+| Chosen                                                   | Considered                                                                      | Why                                                                                                                                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `^[689]\d{7}$` in both, sharing `CONTACT_NUMBER_PATTERN` | Leading 6 in the form only (the previous rule); also accepting 3 (VoIP numbers) | Singapore's 8-digit numbers start with 6 (fixed line) or 8 and 9 (mobile); work contacts can be mobiles. One shared pattern means the form and the API cannot disagree |
+
+Trade-off: the designs' error example `9283 9999` is now valid, so that frame no longer reproduces, and an API client sending a 3-prefixed number gets 400.
+
+### Deleting teachers and classes
+
+| Decision                                                                                                      | Considered                                                    | Why                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DELETE /api/teachers/{email}` and `DELETE /api/classes/{teacherEmail}`                                       | An `id` in every response; deleting a class by level and name | Email is the only public unique key for a teacher, and each teacher has at most one class, so the form teacher's email identifies a class. An `id` would change every response; (level, name) is not unique (D3) |
+| `204 No Content`, no body; a JSON `404` when nothing matches                                                  | `200` with the deleted item                                   | Nothing useful to return; the error format stays `{ "error": … }`                                                                                                                                                |
+| A teacher who is still a form teacher gets `409 Teacher is the form teacher of a class and cannot be deleted` | Delete the class too (cascade)                                | Nothing is lost by accident. The existing `ON DELETE RESTRICT` key decides, so a class added at the same moment cannot slip through                                                                              |
+| The teacher repository turns PostgreSQL's `23001` into `TeacherIsFormTeacherError`                            | Map it centrally, like `23505`                                | The meaning belongs to the delete operation; the repository knows which operation ran                                                                                                                            |
+| Migration `0002` grants the app role `DELETE`; `UPDATE` and `TRUNCATE` stay withheld                          | Widen migration `0001`                                        | A new migration reaches databases that already ran `0001`                                                                                                                                                        |
+| `405` on each path lists what it allows: `GET, HEAD, POST` on the collections, `DELETE` on one item           | Keep the fixed `PUT, PATCH, DELETE` list                      | `registerMethodNotAllowed` now derives the unsupported methods from the allowed ones                                                                                                                             |
+
+### The form teacher's email in class responses
+
+The Classes page needs the form teacher's email to delete a class, but the specification's class shape gives only the name, and names are not unique.
+
+| Chosen                                                                       | Considered                                                                                                                | Why                                                                                                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `formTeacher: { name, email }` in `POST /api/classes` and `GET /api/classes` | Match the name against the teacher list, asking which teacher when the name is shared; or disable Delete for shared names | The simplest correct client, at the cost of one field beyond the specification's example. The README says so |
+
+### Delete in the web app
+
+An Actions column holds a Delete button per row, named after the teacher or class for screen readers. A `ConfirmDialog` (antd `Modal`, in `components/ui/`) asks first. A refusal is explained in the dialog in the designs' voice ("This teacher is the form teacher of a class. Delete the class first."), and the list refetches afterwards. There is no design for this; it follows antd's defaults and the existing error patterns.
