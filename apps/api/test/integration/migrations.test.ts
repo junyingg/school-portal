@@ -7,8 +7,8 @@ import {
 import { createDatabase, type Database } from "../../src/db/database.ts"
 
 const APP_TABLES = ["teachers", "classes"]
-const GRANTED_PRIVILEGES = ["SELECT", "INSERT"]
-const WITHHELD_PRIVILEGES = ["UPDATE", "DELETE", "TRUNCATE"]
+const GRANTED_PRIVILEGES = ["SELECT", "INSERT", "DELETE"]
+const WITHHELD_PRIVILEGES = ["UPDATE", "TRUNCATE"]
 const MIGRATION_TABLES = ["kysely_migration", "kysely_migration_lock"]
 const MIGRATION_TABLE_PRIVILEGES = ["SELECT", "INSERT", "UPDATE", "DELETE"]
 const INSUFFICIENT_PRIVILEGE = "42501"
