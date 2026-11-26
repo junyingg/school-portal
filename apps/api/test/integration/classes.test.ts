@@ -31,12 +31,12 @@ beforeEach(async () => {
 })
 
 describe("POST /api/classes", () => {
-  it("returns 201 with only the form teacher's name, in spec key order", async () => {
+  it("returns 201 with the form teacher's name and email, in key order", async () => {
     const response = await postJson(testApp.app, CLASSES_PATH, aClassRequest())
 
     expect(response.statusCode).toBe(201)
     expect(response.body).toBe(
-      '{"level":"Primary 1","name":"Class 1A","formTeacher":{"name":"Mary"}}',
+      '{"level":"Primary 1","name":"Class 1A","formTeacher":{"name":"Mary","email":"teachermary@gmail.com"}}',
     )
   })
 
@@ -48,6 +48,7 @@ describe("POST /api/classes", () => {
     )
 
     expect(response.statusCode).toBe(201)
+    expect(response.json()).toMatchObject({ formTeacher: { email: "teachermary@gmail.com" } })
   })
 
   it("rejects an unknown teacher email with 400", async () => {
@@ -112,7 +113,7 @@ describe("GET /api/classes", () => {
     expect(response.body).toBe('{"data":[]}')
   })
 
-  it("lists classes in insertion order with only the form teacher's name", async () => {
+  it("lists classes in insertion order with the form teacher's name and email", async () => {
     await postJson(
       testApp.app,
       CLASSES_PATH,
@@ -122,7 +123,12 @@ describe("GET /api/classes", () => {
 
     const response = await getJson(testApp.app, CLASSES_PATH)
 
-    expect(response.json()).toStrictEqual({ data: [CLASS_2B, CLASS_1A] })
+    expect(response.json()).toStrictEqual({
+      data: [
+        { ...CLASS_2B, formTeacher: { name: KEN.name, email: KEN.email } },
+        { ...CLASS_1A, formTeacher: { name: MARY.name, email: MARY.email } },
+      ],
+    })
   })
 
   it.each([

@@ -30,7 +30,7 @@ function fakeClassRepository(
 const [CLASS_1A, CLASS_2B] = SPEC_CLASSES
 
 describe("addClass", () => {
-  it("inserts the class for the teacher found by email and returns only the teacher name", async () => {
+  it("inserts the class for the teacher found by email and returns the teacher's stored name and email", async () => {
     const findByEmail = vi.fn<TeacherRepository["findByEmail"]>().mockResolvedValue(MARY_RECORD)
     const insert = vi.fn<ClassRepository["insert"]>().mockResolvedValue()
     const service = createClassService({
@@ -41,7 +41,7 @@ describe("addClass", () => {
     await expect(service.addClass(CLASS_1A_WITH_UPPER_CASE_EMAIL)).resolves.toStrictEqual({
       level: "Primary 1",
       name: "Class 1A",
-      formTeacher: { name: "Mary" },
+      formTeacher: { name: "Mary", email: "teachermary@gmail.com" },
     })
     expect(findByEmail).toHaveBeenCalledExactlyOnceWith("TEACHERMARY@GMAIL.COM")
     expect(insert).toHaveBeenCalledExactlyOnceWith({
@@ -79,8 +79,18 @@ describe("addClass", () => {
 describe("listClasses", () => {
   it("keeps the repository order", async () => {
     const records: ClassWithFormTeacherRecord[] = [
-      { level: "Primary 2", name: "Class 2B", formTeacherName: "Ken" },
-      { level: "Primary 1", name: "Class 1A", formTeacherName: "Mary" },
+      {
+        level: "Primary 2",
+        name: "Class 2B",
+        formTeacherName: "Ken",
+        formTeacherEmail: "teacherken@gmail.com",
+      },
+      {
+        level: "Primary 1",
+        name: "Class 1A",
+        formTeacherName: "Mary",
+        formTeacherEmail: "teachermary@gmail.com",
+      },
     ]
     const service = createClassService({
       teacherRepository: fakeTeacherRepository(() => Promise.resolve(undefined)),
@@ -90,6 +100,9 @@ describe("listClasses", () => {
       ),
     })
 
-    await expect(service.listClasses()).resolves.toStrictEqual([CLASS_2B, CLASS_1A])
+    await expect(service.listClasses()).resolves.toStrictEqual([
+      { ...CLASS_2B, formTeacher: { name: "Ken", email: "teacherken@gmail.com" } },
+      { ...CLASS_1A, formTeacher: { name: "Mary", email: "teachermary@gmail.com" } },
+    ])
   })
 })

@@ -761,8 +761,8 @@
                 "exec": [
                   "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
                   "pm.test(\"matches classSchema\", () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"classSchema\"))));",
-                  "pm.test(\"names only the form teacher\", () => {",
-                  "  pm.expect(pm.response.json().formTeacher).to.eql({ name: \"Mary\" });",
+                  "pm.test(\"names the form teacher with the email as stored\", () => {",
+                  "  pm.expect(pm.response.json().formTeacher).to.eql({ name: \"Mary\", email: pm.collectionVariables.get(\"maryEmail\") });",
                   "});"
                 ]
               }

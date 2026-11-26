@@ -76,15 +76,23 @@ describe("createClassRequestSchema", () => {
 })
 
 describe("schoolClassSchema", () => {
-  it("carries only the form teacher's name", () => {
+  it("carries the form teacher's name and email and nothing else", () => {
     expect(
       schoolClassSchema.parse({ ...FIRST_CLASS, formTeacher: MARY }).formTeacher,
-    ).toStrictEqual({ name: "Mary" })
+    ).toStrictEqual({ name: "Mary", email: "teachermary@gmail.com" })
+  })
+
+  it("keeps the form teacher key order name, email", () => {
+    const formTeacher = { email: MARY.email, name: MARY.name }
+
+    expect(
+      Object.keys(schoolClassSchema.parse({ ...FIRST_CLASS, formTeacher }).formTeacher),
+    ).toEqual(["name", "email"])
   })
 
   it("keeps the key order level, name, formTeacher", () => {
     const shuffled = {
-      formTeacher: FIRST_CLASS.formTeacher,
+      formTeacher: { name: MARY.name, email: MARY.email },
       name: FIRST_CLASS.name,
       level: FIRST_CLASS.level,
     }
@@ -94,10 +102,10 @@ describe("schoolClassSchema", () => {
 })
 
 describe("classListResponseSchema", () => {
-  it("accepts the spec list", () => {
-    expect(classListResponseSchema.parse({ data: SPEC_CLASSES })).toStrictEqual({
-      data: SPEC_CLASSES,
-    })
+  it("accepts a list of classes with their form teachers", () => {
+    const classes = [{ ...FIRST_CLASS, formTeacher: { name: MARY.name, email: MARY.email } }]
+
+    expect(classListResponseSchema.parse({ data: classes })).toStrictEqual({ data: classes })
   })
 })
 
@@ -110,7 +118,7 @@ describe("schoolClassSchema as JSON Schema", () => {
       required: ["level", "name", "formTeacher"],
       additionalProperties: false,
       properties: {
-        formTeacher: { type: "object", required: ["name"], additionalProperties: false },
+        formTeacher: { type: "object", required: ["name", "email"], additionalProperties: false },
       },
     })
   })
