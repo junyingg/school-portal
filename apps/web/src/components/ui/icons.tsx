@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons"
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons"
 
 const ICON_SIZE = 24
 
@@ -23,4 +23,8 @@ export function AddIcon() {
 
 export function BackIcon() {
   return <ArrowLeftOutlined aria-hidden="true" />
+}
+
+export function DeleteIcon() {
+  return <DeleteOutlined aria-hidden="true" />
 }

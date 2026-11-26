@@ -1,5 +1,5 @@
 import type { SchoolClass } from "@school-portal/contract"
-import { Button, DataTable, type DataColumn } from "../../components/ui/index.ts"
+import { DataTable, DeleteIcon, IconButton, type DataColumn } from "../../components/ui/index.ts"
 import { CLASS_DELETE_COPY } from "./classDeleteCopy.ts"
 
 const DESIGN_COLUMNS: readonly DataColumn<SchoolClass>[] = [
@@ -13,6 +13,8 @@ const DESIGN_COLUMNS: readonly DataColumn<SchoolClass>[] = [
   },
 ]
 
+const ACTIONS_COLUMN_WIDTH = 72
+
 interface ClassTableProps {
   readonly classes: readonly SchoolClass[]
   readonly onDelete: (schoolClass: SchoolClass) => void
@@ -22,16 +24,18 @@ function actionsColumn(onDelete: (schoolClass: SchoolClass) => void): DataColumn
   return {
     key: "actions",
     title: "Actions",
+    isTitleHidden: true,
+    width: ACTIONS_COLUMN_WIDTH,
     render: (schoolClass) => (
-      <Button
-        variant="danger"
+      <IconButton
+        icon={<DeleteIcon />}
         accessibleName={`${CLASS_DELETE_COPY.confirm} ${schoolClass.name}`}
+        tooltip={CLASS_DELETE_COPY.confirm}
+        isDanger
         onClick={() => {
           onDelete(schoolClass)
         }}
-      >
-        {CLASS_DELETE_COPY.confirm}
-      </Button>
+      />
     ),
   }
 }

@@ -6,6 +6,7 @@ export interface DataColumn<Row> {
   readonly key: string
   readonly title: string
   readonly width?: number | undefined
+  readonly isTitleHidden?: boolean
   readonly render: (row: Row, position: number) => ReactNode
 }
 
@@ -21,6 +22,13 @@ interface PositionedRow<Row> {
   readonly position: number
 }
 
+function headerOf<Row>(column: DataColumn<Row>) {
+  if (column.isTitleHidden !== true) {
+    return { title: column.title }
+  }
+  return { title: "", onHeaderCell: () => ({ "aria-label": column.title }) }
+}
+
 function positionRows<Row>(rows: readonly Row[]): PositionedRow<Row>[] {
   return rows.map((row, index) => ({ key: String(index), row, position: index + 1 }))
 }
@@ -28,7 +36,7 @@ function positionRows<Row>(rows: readonly Row[]): PositionedRow<Row>[] {
 export function DataTable<Row>({ label, columns, rows }: DataTableProps<Row>) {
   const tableColumns = columns.map((column) => ({
     key: column.key,
-    title: column.title,
+    ...headerOf(column),
     ...(column.width === undefined ? {} : { width: column.width }),
     render: (_value: unknown, entry: PositionedRow<Row>) =>
       column.render(entry.row, entry.position),
