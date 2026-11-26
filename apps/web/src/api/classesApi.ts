@@ -4,7 +4,7 @@ import {
   type CreateClassRequest,
   type SchoolClass,
 } from "@school-portal/contract"
-import { getJson, postJson } from "./apiClient.ts"
+import { deleteResource, getJson, postJson } from "./apiClient.ts"
 
 export const CLASSES_PATH = "/api/classes"
 
@@ -15,4 +15,8 @@ export async function fetchClasses(): Promise<SchoolClass[]> {
 
 export function createClass(request: CreateClassRequest): Promise<SchoolClass> {
   return postJson(CLASSES_PATH, request, schoolClassSchema)
+}
+
+export function deleteClass(teacherEmail: string): Promise<void> {
+  return deleteResource(`${CLASSES_PATH}/${encodeURIComponent(teacherEmail)}`)
 }

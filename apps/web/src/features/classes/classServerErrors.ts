@@ -1,6 +1,11 @@
-import { FORM_TEACHER_TAKEN_MESSAGE, unknownTeacherEmailMessage } from "@school-portal/contract"
+import {
+  FORM_TEACHER_TAKEN_MESSAGE,
+  noClassForTeacherMessage,
+  unknownTeacherEmailMessage,
+} from "@school-portal/contract"
 import { ApiError } from "../../api/ApiError.ts"
 import { bannerFor, type ServerErrorPresentation } from "../serverErrorPresentation.ts"
+import { CLASS_DELETE_COPY } from "./classDeleteCopy.ts"
 import type { ClassFieldName } from "./classFormSchema.ts"
 
 export const CLASS_SERVER_ERROR_COPY = {
@@ -32,4 +37,11 @@ export function presentClassServerError(
     }
   }
   return bannerFor(error)
+}
+
+export function presentClassDeleteError(error: unknown, teacherEmail: string): string {
+  if (error instanceof ApiError && error.message === noClassForTeacherMessage(teacherEmail)) {
+    return CLASS_DELETE_COPY.alreadyDeleted
+  }
+  return bannerFor(error).message
 }
