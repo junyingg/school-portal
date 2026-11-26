@@ -26,65 +26,66 @@ The web app and the API share one origin through nginx. Both validate against on
 
 ### `packages/contract/src`
 
-| File               | Job                                                                                                                                                               |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`         | The package's public exports                                                                                                                                      |
-| `fieldRules.ts`    | Building blocks: `requiredString`, `requiredText`, `personName`, `emailField`, `contactNumberField`, `listedValue`; length limits, patterns and the list messages |
-| `teacher.ts`       | `createTeacherRequestSchema`, `teacherSchema`, `teacherListResponseSchema`                                                                                        |
-| `schoolClass.ts`   | `createClassRequestSchema`, `schoolClassSchema`, `formTeacherSchema`, `classListResponseSchema`                                                                   |
-| `optionLists.ts`   | `SUBJECTS` (nine) and `CLASS_LEVELS` (Primary 1–6)                                                                                                                |
-| `errorMessages.ts` | Every fixed error message, and `unknownTeacherEmailMessage(email)`                                                                                                |
-| `errorResponse.ts` | `errorResponseSchema`: `{ error: string }`                                                                                                                        |
-| `examples.ts`      | The specification's example teachers, classes and requests, used as test fixtures                                                                                 |
+| File               | Job                                                                                                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`         | The package's public exports                                                                                                                                                                   |
+| `fieldRules.ts`    | Building blocks: `requiredString`, `requiredText`, `personName`, `emailField`, `contactNumberField`, `listedValue`; length limits, patterns and the list messages                              |
+| `teacher.ts`       | `createTeacherRequestSchema`, `teacherPathParamsSchema` (the email in `DELETE /api/teachers/{email}`), `teacherSchema`, `teacherListResponseSchema`                                            |
+| `schoolClass.ts`   | `createClassRequestSchema`, `classPathParamsSchema` (the email in `DELETE /api/classes/{teacherEmail}`), `schoolClassSchema`, `formTeacherSchema` (`name`, `email`), `classListResponseSchema` |
+| `optionLists.ts`   | `SUBJECTS` (nine) and `CLASS_LEVELS` (Primary 1–6)                                                                                                                                             |
+| `errorMessages.ts` | Every fixed error message, `unknownTeacherEmailMessage(email)` and `noClassForTeacherMessage(email)`                                                                                           |
+| `errorResponse.ts` | `errorResponseSchema`: `{ error: string }`                                                                                                                                                     |
+| `examples.ts`      | The specification's example teachers, classes and requests, used as test fixtures                                                                                                              |
 
 Response schemas are plain `z.object`s, so serialisation drops any key that is not in the specification.
 
 ### `apps/api/src`
 
-| File or folder                                     | Job                                                                                                                                                                          |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `server.ts`                                        | Entry point: loads config, creates the pool, builds the app, listens, and drains on shutdown with `close-with-grace`                                                         |
-| `app.ts`                                           | `buildApp(dependencies)`: creates Fastify with a 16 KiB body limit and `x-request-id`, sets the Zod validator and serializer, registers the plugins and routes               |
-| `composition.ts`                                   | `createServices(db)`: wires repositories into services                                                                                                                       |
-| `config/env.ts`                                    | Validates the environment with Zod and fails fast with every problem listed                                                                                                  |
-| `config/limits.ts`                                 | `REQUEST_BODY_LIMIT_BYTES`                                                                                                                                                   |
-| `http/jsonOnlyPlugin.ts`                           | Removes Fastify's `text/plain` parser, so every non-JSON body is a 415                                                                                                       |
-| `http/securityPlugin.ts`                           | Helmet with `default-src 'none'`, `Cache-Control: no-store`, and CORS only when `CORS_ALLOWED_ORIGINS` is set                                                                |
-| `http/healthPlugin.ts`                             | `GET /healthz` and `GET /readyz` (hidden from the API document)                                                                                                              |
-| `http/methodNotAllowed.ts`                         | JSON 405 with an `Allow` header for `PUT`, `PATCH` and `DELETE`                                                                                                              |
-| `http/apiErrorResponses.ts`                        | The error response schemas each route declares                                                                                                                               |
-| `http/openApiPlugin.ts`, `http/openApiDocument.ts` | Generates `apps/api/openapi.json` from the route schemas (`scripts/writeOpenApi.ts`)                                                                                         |
-| `errors/errorHandlerPlugin.ts`                     | The single error and not-found handler; logs server faults only                                                                                                              |
-| `errors/errorMapper.ts`                            | `mapErrorToReply(error)`: validation → 400, unknown teacher → 400, Fastify body errors → 400/413/415, unique violation → 409, other 4xx → reason phrase, anything else → 500 |
-| `errors/validationMessage.ts`                      | Joins the first message of each invalid field with `"; "`; a whole-body issue becomes "Request body must be a JSON object"                                                   |
-| `errors/postgresErrors.ts`                         | Recognises `23505` and maps the constraint name to a message                                                                                                                 |
-| `errors/domainErrors.ts`                           | `UnknownTeacherEmailError`                                                                                                                                                   |
-| `modules/teachers/`                                | `teacherRoutes.ts`, `teacherHandlers.ts`, `teacherService.ts`, `teacherRepository.ts`, `teacherMapper.ts`                                                                    |
-| `modules/classes/`                                 | `classRoutes.ts`, `classHandlers.ts`, `classService.ts`, `classRepository.ts`, `classMapper.ts`                                                                              |
-| `db/database.ts`                                   | Table types and `createDatabase` (a Kysely instance over a `pg` pool)                                                                                                        |
-| `db/migrations/`                                   | `0001_create_teachers_and_classes.ts` and the static `index.ts` list                                                                                                         |
-| `db/migrator.ts`, `db/migrate.ts`                  | Runs the migrations; `migrate.ts` is the command the `migrate` container runs                                                                                                |
-| `db/readiness.ts`                                  | `select 1`, failing once the server starts draining                                                                                                                          |
-| `db/constraintNames.ts`                            | The two unique-constraint names the error mapper relies on                                                                                                                   |
+| File or folder                                     | Job                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server.ts`                                        | Entry point: loads config, creates the pool, builds the app, listens, and drains on shutdown with `close-with-grace`                                                                                                                                                   |
+| `app.ts`                                           | `buildApp(dependencies)`: creates Fastify with a 16 KiB body limit and `x-request-id`, sets the Zod validator and serializer, registers the plugins and routes                                                                                                         |
+| `composition.ts`                                   | `createServices(db)`: wires repositories into services                                                                                                                                                                                                                 |
+| `config/env.ts`                                    | Validates the environment with Zod and fails fast with every problem listed                                                                                                                                                                                            |
+| `config/limits.ts`                                 | `REQUEST_BODY_LIMIT_BYTES`                                                                                                                                                                                                                                             |
+| `http/jsonOnlyPlugin.ts`                           | Removes Fastify's `text/plain` parser, so every non-JSON body is a 415                                                                                                                                                                                                 |
+| `http/securityPlugin.ts`                           | Helmet with `default-src 'none'`, `Cache-Control: no-store`, and CORS only when `CORS_ALLOWED_ORIGINS` is set                                                                                                                                                          |
+| `http/healthPlugin.ts`                             | `GET /healthz` and `GET /readyz` (hidden from the API document)                                                                                                                                                                                                        |
+| `http/methodNotAllowed.ts`                         | JSON 405 with an `Allow` header; the unsupported methods are derived from the ones a path allows                                                                                                                                                                       |
+| `http/apiErrorResponses.ts`                        | The error response schemas each route declares                                                                                                                                                                                                                         |
+| `http/openApiPlugin.ts`, `http/openApiDocument.ts` | Generates `apps/api/openapi.json` from the route schemas (`scripts/writeOpenApi.ts`)                                                                                                                                                                                   |
+| `errors/errorHandlerPlugin.ts`                     | The single error and not-found handler; logs server faults only                                                                                                                                                                                                        |
+| `errors/errorMapper.ts`                            | `mapErrorToReply(error)`: validation → 400; domain errors → 400 (unknown `teacherEmail`), 404 (no such teacher or class) or 409 (teacher is a form teacher); Fastify body errors → 400/413/415; unique violation → 409; other 4xx → reason phrase; anything else → 500 |
+| `errors/validationMessage.ts`                      | Joins the first message of each invalid field with `"; "`; a whole-body issue becomes "Request body must be a JSON object"                                                                                                                                             |
+| `errors/postgresErrors.ts`                         | Recognises `23505` and maps the constraint name to a message; `isRestrictViolationOn` recognises `23001` on a named constraint                                                                                                                                         |
+| `errors/domainErrors.ts`                           | `UnknownTeacherEmailError`, `TeacherNotFoundError`, `ClassNotFoundError`, `TeacherIsFormTeacherError`                                                                                                                                                                  |
+| `modules/teachers/`                                | `teacherRoutes.ts`, `teacherHandlers.ts`, `teacherService.ts`, `teacherRepository.ts`, `teacherMapper.ts`                                                                                                                                                              |
+| `modules/classes/`                                 | `classRoutes.ts`, `classHandlers.ts`, `classService.ts`, `classRepository.ts`, `classMapper.ts`                                                                                                                                                                        |
+| `db/database.ts`                                   | Table types and `createDatabase` (a Kysely instance over a `pg` pool)                                                                                                                                                                                                  |
+| `db/teacherEmail.ts`                               | `teacherHasEmail(email)`: the case-insensitive `lower(email) = lower($1)` condition both repositories use                                                                                                                                                              |
+| `db/migrations/`                                   | `0001_create_teachers_and_classes.ts`, `0002_grant_app_delete.ts` and the static `index.ts` list                                                                                                                                                                       |
+| `db/migrator.ts`, `db/migrate.ts`                  | Runs the migrations; `migrate.ts` is the command the `migrate` container runs                                                                                                                                                                                          |
+| `db/readiness.ts`                                  | `select 1`, failing once the server starts draining                                                                                                                                                                                                                    |
+| `db/constraintNames.ts`                            | The two unique-constraint names the error mapper relies on                                                                                                                                                                                                             |
 
 Each layer has one job. Routes declare the path and the Zod schemas. Handlers turn a request into a service call and set the status. Services hold the rules and call repositories. Repositories hold the queries. `eslint.config.ts` enforces the direction.
 
 ### `apps/web/src`
 
-| File or folder                                                      | Job                                                                                                                                                                                                           |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main.tsx`, `configureZod.ts`                                       | Entry point; puts Zod in `jitless` mode so the CSP needs no `unsafe-eval`                                                                                                                                     |
-| `App.tsx`, `routes.tsx`, `routePaths.ts`                            | Query client, theme and router; five routes under one layout (`/` redirects to `/classes`; unknown paths show `NotFoundPage`)                                                                                 |
-| `api/`                                                              | `apiClient.ts` (`getJson`, `postJson`), `ApiError.ts`, `teachersApi.ts`, `classesApi.ts`, `queryKeys.ts`. No React here (lint-enforced)                                                                       |
-| `features/teachers/`                                                | `TeacherForm.tsx`, `TeacherTable.tsx`, `teacherFormSchema.ts`, `teacherFieldMessages.ts`, `teacherServerErrors.ts`, `formatContactNumber.ts`, `useTeachers.ts`, `useCreateTeacher.ts`                         |
-| `features/classes/`                                                 | `ClassForm.tsx`, `ClassTable.tsx`, `FormTeacherSelect.tsx`, `classFormSchema.ts`, `classFieldMessages.ts`, `classServerErrors.ts`, `teacherOptions.ts`, `classDraft.ts`, `useClasses.ts`, `useCreateClass.ts` |
-| `features/serverErrorPresentation.ts`, `features/selectionRules.ts` | Shared by both features: the field-or-banner error type, and "nothing selected yet"                                                                                                                           |
-| `components/`                                                       | Shared building blocks: `ListPage.tsx`, `FormShell.tsx`, `FormActions.tsx`, `ControlledTextInput.tsx`, `ControlledSelect.tsx`, `EmptyState.tsx`, `LoadErrorState.tsx`, `PageHeader.tsx`, `fieldIds.ts`        |
-| `components/ui/`                                                    | The only place that imports `antd`: `Button`, `Card`, `DataTable`, `ErrorBanner`, `FormField`, `FormLayout`, `LoadingState`, `SelectInput`, `TextInput`, `ThemeProvider`, `theme.ts`, `icons.tsx`             |
-| `hooks/`                                                            | `useSubmitThenReturn.ts`, `useFocusFieldOnServerError.ts`, `useFocusHeadingOnNavigate.ts`                                                                                                                     |
-| `shell/`                                                            | `AppLayout.tsx`, `TopNav.tsx`, `NavTab.tsx`, `activeTab.ts`                                                                                                                                                   |
-| `pages/`                                                            | `TeachersPage.tsx`, `AddTeacherPage.tsx`, `ClassesPage.tsx`, `AddClassPage.tsx`, `NotFoundPage.tsx`                                                                                                           |
-| `test/`                                                             | `setup.ts`, `renderWithProviders.tsx`, `designFixtures.ts`, `msw/handlers.ts`, `msw/server.ts`                                                                                                                |
+| File or folder                                                      | Job                                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.tsx`, `configureZod.ts`                                       | Entry point; puts Zod in `jitless` mode so the CSP needs no `unsafe-eval`                                                                                                                                                                                                         |
+| `App.tsx`, `routes.tsx`, `routePaths.ts`                            | Query client, theme and router; five routes under one layout (`/` redirects to `/classes`; unknown paths show `NotFoundPage`)                                                                                                                                                     |
+| `api/`                                                              | `apiClient.ts` (`getJson`, `postJson`, `deleteResource`), `ApiError.ts`, `teachersApi.ts`, `classesApi.ts`, `queryKeys.ts`. No React here (lint-enforced)                                                                                                                         |
+| `features/teachers/`                                                | `TeacherForm.tsx`, `TeacherTable.tsx`, `DeleteTeacherDialog.tsx`, `teacherFormSchema.ts`, `teacherFieldMessages.ts`, `teacherDeleteCopy.ts`, `teacherServerErrors.ts`, `formatContactNumber.ts`, `useTeachers.ts`, `useCreateTeacher.ts`, `useDeleteTeacher.ts`                   |
+| `features/classes/`                                                 | `ClassForm.tsx`, `ClassTable.tsx`, `DeleteClassDialog.tsx`, `FormTeacherSelect.tsx`, `classFormSchema.ts`, `classFieldMessages.ts`, `classDeleteCopy.ts`, `classServerErrors.ts`, `teacherOptions.ts`, `classDraft.ts`, `useClasses.ts`, `useCreateClass.ts`, `useDeleteClass.ts` |
+| `features/serverErrorPresentation.ts`, `features/selectionRules.ts` | Shared by both features: the field-or-banner error type, and "nothing selected yet"                                                                                                                                                                                               |
+| `components/`                                                       | Shared building blocks: `ListPage.tsx`, `FormShell.tsx`, `FormActions.tsx`, `ControlledTextInput.tsx`, `ControlledSelect.tsx`, `EmptyState.tsx`, `LoadErrorState.tsx`, `PageHeader.tsx`, `fieldIds.ts`                                                                            |
+| `components/ui/`                                                    | The only place that imports `antd`: `Button`, `Card`, `ConfirmDialog`, `DataTable`, `ErrorBanner`, `FormField`, `FormLayout`, `LoadingState`, `SelectInput`, `TextInput`, `ThemeProvider`, `theme.ts`, `icons.tsx`                                                                |
+| `hooks/`                                                            | `useSubmitThenReturn.ts`, `useFocusFieldOnServerError.ts`, `useFocusHeadingOnNavigate.ts`                                                                                                                                                                                         |
+| `shell/`                                                            | `AppLayout.tsx`, `TopNav.tsx`, `NavTab.tsx`, `activeTab.ts`                                                                                                                                                                                                                       |
+| `pages/`                                                            | `TeachersPage.tsx`, `AddTeacherPage.tsx`, `ClassesPage.tsx`, `AddClassPage.tsx`, `NotFoundPage.tsx`                                                                                                                                                                               |
+| `test/`                                                             | `setup.ts`, `renderWithProviders.tsx`, `designFixtures.ts`, `msw/handlers.ts`, `msw/server.ts`                                                                                                                                                                                    |
 
 ## One request end to end: `POST /api/classes`
 
@@ -96,10 +97,10 @@ Each layer has one job. Routes declare the path and the Zod schemas. Handlers tu
 2. **Fastify** (`apps/api/src/app.ts`). The request id from nginx becomes the log id. A body over 16 KiB is rejected with `FST_ERR_CTP_BODY_TOO_LARGE`. `jsonOnlyPlugin` has removed the `text/plain` parser, so any `Content-Type` other than JSON fails with `FST_ERR_CTP_INVALID_MEDIA_TYPE`. Malformed JSON fails with `FST_ERR_CTP_INVALID_JSON_BODY`.
 3. **Route and validation** (`modules/classes/classRoutes.ts`). The route declares `body: createClassRequestSchema`. The Zod validator from `fastify-type-provider-zod` trims each field, checks `level` against Primary 1–6, `name` for 1–50 characters, and `teacherEmail` for a simple email shape, and drops unknown keys. A failure carries a `validation` array of issues.
 4. **Handler** (`classHandlers.ts`). `addClass` passes the parsed body to the service and replies 201 with the result.
-5. **Service** (`classService.ts`). `addClass` calls `teacherRepository.findByEmail`. No teacher → it throws `UnknownTeacherEmailError`. Otherwise it calls `classRepository.insert` with the teacher's id and returns `toSchoolClass(…)`: level, name and `formTeacher: { name }`.
+5. **Service** (`classService.ts`). `addClass` calls `teacherRepository.findByEmail`. No teacher → it throws `UnknownTeacherEmailError`. Otherwise it calls `classRepository.insert` with the teacher's id and returns `toSchoolClass(…)`: level, name and `formTeacher: { name, email }`, with the email as stored.
 6. **Repositories** (`teacherRepository.ts`, `classRepository.ts`). Kysely builds parameterised SQL: `select … from teachers where lower(email) = lower($1)`, which uses the unique `lower(email)` index, then `insert into classes (level, name, form_teacher_id) values ($1, $2, $3)`.
 7. **PostgreSQL.** The unique constraint `classes_form_teacher_id_key` decides the form-teacher rule, even when two requests race. A second class for the same teacher fails with SQLSTATE `23505` and that constraint name.
-8. **Serialisation.** On success, Fastify serialises the result through `schoolClassSchema`, so only `level`, `name` and `formTeacher.name` leave the server, in that order. `securityPlugin` adds Helmet's headers and `Cache-Control: no-store`.
+8. **Serialisation.** On success, Fastify serialises the result through `schoolClassSchema`, so only `level`, `name` and `formTeacher` (`name`, then `email`) leave the server, in that order. `securityPlugin` adds Helmet's headers and `Cache-Control: no-store`.
 9. **Error mapper** (`errors/errorHandlerPlugin.ts` → `errors/errorMapper.ts`). Any thrown error lands here:
 
 | Error                                                                            | Reply                                                                                                                                      |
@@ -114,7 +115,16 @@ Each layer has one job. Routes declare the path and the Zod schemas. Handlers tu
 | Any other error with a 4xx `statusCode`                                          | that status, with its reason phrase                                                                                                        |
 | Any other error                                                                  | 500 `Internal server error`, logged with the request id                                                                                    |
 
-Every reply is `{ "error": "…" }`. Only 500s are logged as errors, so client mistakes do not fill the error log. Unknown routes get a JSON 404 from the not-found handler, and `PUT`, `PATCH` and `DELETE` on either path get the JSON 405 from `methodNotAllowed.ts`.
+Every reply is `{ "error": "…" }`. Only 500s are logged as errors, so client mistakes do not fill the error log. Unknown routes get a JSON 404 from the not-found handler, and a method a path does not allow gets the JSON 405 from `methodNotAllowed.ts`.
+
+## Deleting: `DELETE /api/teachers/{email}`
+
+1. **Route** (`teacherRoutes.ts`). `params: teacherPathParamsSchema` trims the email from the path and checks its format; a malformed one is a 400.
+2. **Service** (`teacherService.ts`). `deleteTeacher` calls `teacherRepository.deleteByEmail`. If no row was deleted, it throws `TeacherNotFoundError` (404 `No teacher found with email <email>`).
+3. **Repository** (`teacherRepository.ts`). `delete from teachers where lower(email) = lower($1)`. If the teacher is still a form teacher, the `ON DELETE RESTRICT` key `classes_form_teacher_id_fkey` makes PostgreSQL refuse with `23001`; the repository turns that into `TeacherIsFormTeacherError` (409).
+4. **Reply.** `204 No Content` with no body.
+
+`DELETE /api/classes/{teacherEmail}` follows the same path: `classRepository.deleteByFormTeacherEmail` runs `delete from classes where form_teacher_id in (select id from teachers where lower(email) = lower($1))`, and no deleted row is `ClassNotFoundError` (404 `No class found with form teacher email <email>`). Class responses carry `formTeacher.email` so a client knows what to send.
 
 ## The web app
 
@@ -131,7 +141,7 @@ Every reply is `{ "error": "…" }`. Only 500s are logged as errors, so client m
 | Empty       | `EmptyState`: "There are no existing … yet." and the Add button | no button  |
 | Items       | `TeacherTable` or `ClassTable` through `DataTable`              | Add button |
 
-`DataTable` numbers rows from 1 and sits in a focusable scroll region, so a narrow screen scrolls the table, not the page. `TeacherTable` shows contact numbers as `6736 3939` (`formatContactNumber.ts`).
+`DataTable` numbers rows from 1 and sits in a focusable scroll region, so a narrow screen scrolls the table, not the page. Both tables end with an Actions column holding a Delete button per row, named after the teacher or class. `TeacherTable` shows contact numbers as `6736 3939` (`formatContactNumber.ts`).
 
 ### Forms
 
@@ -153,6 +163,10 @@ Every reply is `{ "error": "…" }`. Only 500s are logged as errors, so client m
 | anything else                                          | the API's message in an error banner above the buttons                          |
 
 `useFocusFieldOnServerError` moves focus to the field with the server error. Editing that field clears it. A successful create invalidates the list query, so the list refetches.
+
+### Deleting from the tables
+
+`TeachersPage` and `ClassesPage` keep the row being deleted in state and render `DeleteTeacherDialog` or `DeleteClassDialog` for it. Each dialog is a `ConfirmDialog` (antd `Modal`). Confirming runs `useDeleteTeacher` or `useDeleteClass` (`deleteResource` in `api/apiClient.ts`, which expects a `204`); the list refetches whether the delete succeeds or fails. A refusal stays in the dialog: `presentTeacherDeleteError` and `presentClassDeleteError` turn the API's 409 and 404 messages into the designs' voice, and anything else shows the API's message.
 
 ### Navigation and the Add Class draft
 
@@ -185,6 +199,8 @@ create table classes (
 );
 
 grant select, insert on teachers, classes to school_portal_app;
+-- migration 0002_grant_app_delete.ts:
+grant delete on teachers, classes to school_portal_app;
 ```
 
 - `id` orders lists by insertion and never leaves the API.
@@ -192,11 +208,11 @@ grant select, insert on teachers, classes to school_portal_app;
 - `classes_form_teacher_id_key` is the form-teacher rule; `constraintNames.ts` holds both names for the error mapper.
 - Length limits are enforced by the contract at the API edge, not by the columns.
 
-| Role                         | Created by                                  | Can                                                                                                                                                                              |
-| ---------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `postgres` (`POSTGRES_USER`) | the PostgreSQL image                        | bootstrap only; the API and the migrator never use it                                                                                                                            |
-| `school_portal_migrator`     | `docker/postgres/initdb/01-create-roles.sh` | owns the database and schema `public`; runs migrations through `MIGRATION_DATABASE_URL`                                                                                          |
-| `school_portal_app`          | the same script                             | `CONNECT` and `USAGE` on `public` from the script; `SELECT` and `INSERT` on both tables from migration `0001`; no `UPDATE`, `DELETE`, DDL or access to Kysely's migration tables |
+| Role                         | Created by                                  | Can                                                                                                                                                                                                      |
+| ---------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `postgres` (`POSTGRES_USER`) | the PostgreSQL image                        | bootstrap only; the API and the migrator never use it                                                                                                                                                    |
+| `school_portal_migrator`     | `docker/postgres/initdb/01-create-roles.sh` | owns the database and schema `public`; runs migrations through `MIGRATION_DATABASE_URL`                                                                                                                  |
+| `school_portal_app`          | the same script                             | `CONNECT` and `USAGE` on `public` from the script; `SELECT` and `INSERT` on both tables from migration `0001`, `DELETE` from `0002`; no `UPDATE`, `TRUNCATE`, DDL or access to Kysely's migration tables |
 
 The init script runs only when the data volume is first created. In `compose.yaml`, the `migrate` service (`node dist/db/migrate.js`) runs once after PostgreSQL is healthy, and the API starts only after it completes. The passwords come from `.env`, which `pnpm env:init` writes with mode `0600`.
 
