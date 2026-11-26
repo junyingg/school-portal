@@ -1,8 +1,14 @@
-import { screen, within } from "@testing-library/react"
+import { noClassForTeacherMessage } from "@school-portal/contract"
+import { screen, waitFor, within } from "@testing-library/react"
 import { userEvent } from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { AppRoutes } from "../routes.tsx"
-import { classesEmpty, classesFail, classesPending } from "../test/msw/handlers.ts"
+import {
+  classesEmpty,
+  classesFail,
+  classesPending,
+  deleteClassFails,
+} from "../test/msw/handlers.ts"
 import { server } from "../test/msw/server.ts"
 import { renderWithProviders } from "../test/renderWithProviders.tsx"
 
@@ -64,5 +70,39 @@ describe("ClassesPage", () => {
     await user.click(retry)
 
     expect(await screen.findByRole("table", { name: "Classes" })).toBeInTheDocument()
+  })
+})
+
+describe("ClassesPage deleting a class", () => {
+  it("deletes a class after confirming", async () => {
+    const user = userEvent.setup()
+    renderClassesPage()
+
+    await user.click(await screen.findByRole("button", { name: "Delete Class 4D" }))
+    const dialog = await screen.findByRole("dialog", { name: "Delete class?" })
+    expect(dialog).toHaveTextContent("Delete Class 4D (Primary 4, form teacher Wong Sze Ting)?")
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }))
+
+    await waitFor(() => {
+      expect(screen.queryByText("Class 4D")).not.toBeInTheDocument()
+    })
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(within(screen.getByRole("table", { name: "Classes" })).getAllByRole("row")).toHaveLength(
+      5,
+    )
+  })
+
+  it("says so when the class was already deleted", async () => {
+    server.use(deleteClassFails(404, noClassForTeacherMessage("wong.szeting@example.com")))
+    const user = userEvent.setup()
+    renderClassesPage()
+
+    await user.click(await screen.findByRole("button", { name: "Delete Class 4D" }))
+    const dialog = await screen.findByRole("dialog", { name: "Delete class?" })
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }))
+
+    expect(
+      await within(dialog).findByText("This class has already been deleted."),
+    ).toBeInTheDocument()
   })
 })

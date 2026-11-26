@@ -99,3 +99,27 @@ test("leads from the no-teachers panel to Add Teacher (stubbed API)", async ({ p
   await expect(page).toHaveURL(/\/teachers\/new$/)
   await expect(page.getByRole("heading", { level: 1, name: "Add Teacher" })).toBeVisible()
 })
+
+test("deletes a class, then its form teacher", async ({ page, request }, testInfo) => {
+  const teacher = uniqueTeacher(testInfo)
+  const className = uniqueClassName(testInfo)
+  await seedTeacher(request, teacher)
+  const seededClass = await request.post("/api/classes", {
+    data: { level: "Primary 1", name: className, teacherEmail: teacher.email },
+  })
+  expect(seededClass.status()).toBe(201)
+
+  await page.goto("/classes")
+  await page.getByRole("button", { name: `Delete ${className}` }).click()
+  const classDialog = page.getByRole("dialog", { name: "Delete class?" })
+  await classDialog.getByRole("button", { name: "Delete" }).click()
+  await expect(classDialog).toBeHidden()
+  await expect(page.getByRole("row").filter({ hasText: className })).toHaveCount(0)
+
+  await page.goto("/teachers")
+  await page.getByRole("button", { name: `Delete ${teacher.name}` }).click()
+  const teacherDialog = page.getByRole("dialog", { name: "Delete teacher?" })
+  await teacherDialog.getByRole("button", { name: "Delete" }).click()
+  await expect(teacherDialog).toBeHidden()
+  await expect(page.getByRole("row").filter({ hasText: teacher.email })).toHaveCount(0)
+})

@@ -2,6 +2,7 @@ import {
   TEACHER_IS_FORM_TEACHER_MESSAGE,
   createClassRequestSchema,
   createTeacherRequestSchema,
+  noClassForTeacherMessage,
   unknownTeacherEmailMessage,
   type SchoolClass,
   type Teacher,
@@ -76,6 +77,18 @@ export const handlers = [
   }),
 
   http.get(CLASSES_URL, () => HttpResponse.json({ data: store.classes })),
+
+  http.delete(`${CLASSES_URL}/:teacherEmail`, ({ params }) => {
+    const teacherEmail = emailParam(params, "teacherEmail")
+    const remaining = store.classes.filter(
+      (schoolClass) => !sameEmail(schoolClass.formTeacher.email, teacherEmail),
+    )
+    if (remaining.length === store.classes.length) {
+      return errorReply(HTTP_NOT_FOUND, noClassForTeacherMessage(teacherEmail))
+    }
+    store.classes = remaining
+    return new HttpResponse(null, { status: HTTP_NO_CONTENT })
+  }),
 
   http.post(CLASSES_URL, async ({ request }) => {
     const parsed = createClassRequestSchema.safeParse(await request.json())
@@ -155,4 +168,8 @@ export function htmlBadGateway(method: "get" | "post", url: string) {
         headers: { "content-type": "text/html" },
       }),
   )
+}
+
+export function deleteClassFails(status: number, error: string) {
+  return http.delete(`${CLASSES_URL}/:teacherEmail`, () => errorReply(status, error))
 }

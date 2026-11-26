@@ -1,5 +1,6 @@
 import { screen, within } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { userEvent } from "@testing-library/user-event"
+import { describe, expect, it, vi } from "vitest"
 import { designClasses } from "../../test/designFixtures.ts"
 import { renderWithProviders } from "../../test/renderWithProviders.tsx"
 import { ClassTable } from "./ClassTable.tsx"
@@ -16,8 +17,8 @@ function cellTexts(row: HTMLElement): (string | null)[] {
 }
 
 describe("ClassTable", () => {
-  it("shows the design headers without sort controls", () => {
-    renderWithProviders(<ClassTable classes={designClasses} />)
+  it("shows the design headers, then Actions, without sort controls", () => {
+    renderWithProviders(<ClassTable classes={designClasses} onDelete={vi.fn()} />)
 
     const headers = within(screen.getByRole("table", { name: "Classes" })).getAllByRole(
       "columnheader",
@@ -27,21 +28,33 @@ describe("ClassTable", () => {
       "Class Level",
       "Class Name",
       "Form Teacher",
+      "Actions",
     ])
     expect(headers.flatMap((header) => within(header).queryAllByRole("button"))).toEqual([])
   })
 
   it("shows the five design rows numbered from 1", () => {
-    renderWithProviders(<ClassTable classes={designClasses} />)
+    renderWithProviders(<ClassTable classes={designClasses} onDelete={vi.fn()} />)
 
     const rows = dataRows()
     expect(rows).toHaveLength(5)
-    expect(cellTexts(rows[0] as HTMLElement)).toEqual(["1", "Primary 1", "Class 1A", "Hannah Low"])
-    expect(cellTexts(rows[4] as HTMLElement)).toEqual(["5", "Primary 2", "Class 2B", "Gao Ah Xing"])
+    expect(cellTexts(rows[0] as HTMLElement)).toEqual([
+      "1",
+      "Primary 1",
+      "Class 1A",
+      "Hannah Low",
+      "Delete",
+    ])
+    expect(cellTexts(rows[4] as HTMLElement).slice(0, 4)).toEqual([
+      "5",
+      "Primary 2",
+      "Class 2B",
+      "Gao Ah Xing",
+    ])
   })
 
   it("keeps insertion order rather than sorting by level", () => {
-    renderWithProviders(<ClassTable classes={designClasses} />)
+    renderWithProviders(<ClassTable classes={designClasses} onDelete={vi.fn()} />)
 
     expect(dataRows().map((row) => cellTexts(row)[1])).toEqual([
       "Primary 1",
@@ -50,5 +63,17 @@ describe("ClassTable", () => {
       "Primary 3",
       "Primary 2",
     ])
+  })
+})
+
+describe("ClassTable delete buttons", () => {
+  it("names each Delete button after its class and reports that class", async () => {
+    const user = userEvent.setup()
+    const onDelete = vi.fn()
+    renderWithProviders(<ClassTable classes={designClasses} onDelete={onDelete} />)
+
+    await user.click(screen.getByRole("button", { name: "Delete Class 4D" }))
+
+    expect(onDelete).toHaveBeenCalledExactlyOnceWith(designClasses[1])
   })
 })
