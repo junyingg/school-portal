@@ -4,9 +4,15 @@ An admin web app and REST API for registering teachers and adding classes, each 
 
 The reasoning, the code walk-through and a requirement-by-requirement map are under [Further reading](#further-reading).
 
-## Hosted links
+**Quick start.** With Node.js 24 or newer, pnpm 12.21.0 and Docker running, from the repository root:
 
-Not deployed. The app runs locally with Docker; see [Run it locally](#run-it-locally).
+```sh
+pnpm install
+pnpm env:init
+pnpm stack:up
+```
+
+Then open http://localhost:8080. The steps below explain each command, how to check and stop the stack, how to develop with live reload, and how to run the tests.
 
 ## Run it locally
 
@@ -73,7 +79,9 @@ node scripts/initEnv.ts
 docker compose up --build --wait
 ```
 
-### Local development with live reload
+## Local development
+
+Live reload for the API and the web app, with only PostgreSQL in Docker.
 
 1. Run `pnpm install` and `pnpm env:init` once, as in step 2.
 2. Start only PostgreSQL and the migrations. This also publishes PostgreSQL on `127.0.0.1:5432`:
@@ -91,9 +99,47 @@ docker compose up --build --wait
 - Web app: http://localhost:5173 (Vite forwards `/api` to the API)
 - API: http://localhost:3000
 
-The API reads `.env` from the repository root. Stop `pnpm dev` with Ctrl+C.
+The API reads `.env` from the repository root. Stop `pnpm dev` with Ctrl+C, and the database with `docker compose stop postgres`. The full stack and this setup share one Compose project, so `pnpm stack:down` deletes the development database and its data too.
 
-### Troubleshooting
+## Testing
+
+### Before the first run
+
+1. Install the dependencies (`pnpm install`, as in step 2).
+2. The integration tests start their own PostgreSQL in Docker, so Docker must be running. On macOS with Colima, also set:
+
+   ```sh
+   export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
+   export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+   export NODE_OPTIONS=--dns-result-order=ipv4first
+   ```
+
+3. The contract and end-to-end tests run against the stack, so start it (`pnpm stack:up`) and install the test browser once:
+
+   ```sh
+   pnpm -F @school-portal/e2e exec playwright install chromium
+   ```
+
+   These tests add teachers and classes to the running stack's database.
+
+### Commands
+
+| Layer                                       | Command                 | Needs             | Proves                                                                                                                                                    |
+| ------------------------------------------- | ----------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit                                        | `pnpm test:unit`        | nothing           | Field rules at every boundary, services with in-memory fakes, error mapping, env config, HTTP plumbing through Fastify `inject()`                         |
+| Component                                   | `pnpm test:component`   | nothing           | Every screen state and design message, with the API faked by MSW                                                                                          |
+| Unit and component with coverage thresholds | `pnpm test:coverage`    | nothing           | The same tests, failing below the coverage targets                                                                                                        |
+| API integration                             | `pnpm test:integration` | Docker            | Real PostgreSQL 18 (Testcontainers) as the restricted app role: exact bodies, case-insensitive uniqueness, constraint mapping, ten-way races, role grants |
+| Contract                                    | `pnpm test:contract`    | the running stack | The deployed stack through nginx with Newman: statuses, content type, JSON Schemas generated from the contract, error shape, nginx's JSON error pages     |
+| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows, deleting a class and a teacher, the form-teacher conflict, responsive widths and WCAG A/AA axe scans in Chromium (Playwright)            |
+
+`pnpm test` runs the unit and component layers. Static checks: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm audit:prod`. Drift checks: `pnpm openapi:write --check` and `pnpm postman:sync --check`.
+
+### Postman
+
+Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database; its last folder deletes the class and teacher it created. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`. The environment's `baseUrl` is fixed at `http://localhost:8080`; change it there if you change `WEB_PORT`.
+
+## Troubleshooting
 
 | Symptom                                                                         | Cause                                                                           | Fix                                                                                                                          |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -106,6 +152,10 @@ The API reads `.env` from the repository root. Stop `pnpm dev` with Ctrl+C.
 | `pnpm install` refuses to run                                                   | The Node.js or pnpm version is outside the supported range                      | Install the versions in step 1                                                                                               |
 
 For service logs, run `docker compose logs api` (or `postgres`, `migrate`, `web`).
+
+## Hosted links
+
+Not deployed. The app runs locally with Docker; see [Run it locally](#run-it-locally).
 
 ## API
 
@@ -260,33 +310,6 @@ nginx adds its own, in the same shape:
 ### Health
 
 The API serves `GET /healthz` (the process is up) and `GET /readyz` (the database answers and the server is not shutting down) on its own port. nginx does not expose them.
-
-## Testing
-
-| Layer                                       | Command                 | Needs             | Proves                                                                                                                                                    |
-| ------------------------------------------- | ----------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit                                        | `pnpm test:unit`        | nothing           | Field rules at every boundary, services with in-memory fakes, error mapping, env config, HTTP plumbing through Fastify `inject()`                         |
-| Component                                   | `pnpm test:component`   | nothing           | Every screen state and design message, with the API faked by MSW                                                                                          |
-| Unit and component with coverage thresholds | `pnpm test:coverage`    | nothing           | The same tests, failing below the coverage targets                                                                                                        |
-| API integration                             | `pnpm test:integration` | Docker            | Real PostgreSQL 18 (Testcontainers) as the restricted app role: exact bodies, case-insensitive uniqueness, constraint mapping, ten-way races, role grants |
-| Contract                                    | `pnpm test:contract`    | the running stack | The deployed stack through nginx with Newman: statuses, content type, JSON Schemas generated from the contract, error shape, nginx's JSON error pages     |
-| End to end                                  | `pnpm test:e2e`         | the running stack | Both user flows, deleting a class and a teacher, the form-teacher conflict, responsive widths and WCAG A/AA axe scans in Chromium (Playwright)            |
-
-`pnpm test` runs the unit and component layers. Before the first end-to-end run, install the browser with `pnpm -F @school-portal/e2e exec playwright install chromium`.
-
-On macOS with Colima, Testcontainers needs:
-
-```sh
-export DOCKER_HOST="unix://$HOME/.colima/default/docker.sock"
-export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
-export NODE_OPTIONS=--dns-result-order=ipv4first
-```
-
-Static checks: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm audit:prod`. Drift checks: `pnpm openapi:write --check` and `pnpm postman:sync --check`.
-
-### Postman
-
-Import `postman/school-portal.postman_collection.json` and `postman/local.postman_environment.json`, then run the collection in order; the requests build on each other. Each run generates fresh emails and class names, so it can be repeated against the same database; its last folder deletes the class and teacher it created. The JSON Schemas and exact messages in the collection variables are generated from the contract by `pnpm postman:sync`. The environment's `baseUrl` is fixed at `http://localhost:8080`; change it there if you change `WEB_PORT`.
 
 ## Assumptions
 
