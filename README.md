@@ -157,7 +157,14 @@ For service logs, run `docker compose logs api` (or `postgres`, `migrate`, `web`
 
 ## Hosted links
 
-Not deployed. The app runs locally with Docker; see [Run it locally](#run-it-locally).
+- Web app: https://136-69-196-36.sslip.io
+- API: https://136-69-196-36.sslip.io/api, for example `GET https://136-69-196-36.sslip.io/api/teachers`
+
+The hosted app is the same Docker Compose stack as the local one, on a single Google Compute Engine `e2-micro` VM. [compose.prod.yaml](compose.prod.yaml) adds Caddy in front of nginx to serve HTTPS with a Let's Encrypt certificate, and stops nginx publishing port 8080. `sslip.io` is a free DNS service that resolves the hostname to the VM's IP address.
+
+There is no login, as the brief allows, so everyone using the link shares one database.
+
+To host it the same way, add `PUBLIC_HOSTNAME=<your hostname>` and `COMPOSE_FILE=compose.yaml:compose.prod.yaml` to `.env`, open ports 80 and 443, then run `docker compose up --build --wait`.
 
 ## API
 
