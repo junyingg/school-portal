@@ -1,0 +1,27 @@
+services:
+  web:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    command:
+      - caddy
+      - reverse-proxy
+      - --from
+      - ${PUBLIC_HOSTNAME:?set PUBLIC_HOSTNAME in .env}
+      - --to
+      - web:8080
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
