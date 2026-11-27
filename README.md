@@ -14,6 +14,8 @@ pnpm stack:up
 
 Then open http://localhost:8080. The steps below explain each command, how to check and stop the stack, how to develop with live reload, and how to run the tests.
 
+**Contents:** [Run it locally](#run-it-locally) · [Local development](#local-development) · [Testing](#testing) · [Troubleshooting](#troubleshooting) · [Hosted links](#hosted-links) · [API](#api) · [Assumptions](#assumptions) · [Rules added from the design](#rules-added-from-the-design-enforced) · [API design suggestions](#api-design-suggestions) · [Architecture and security](#architecture-and-security) · [Project structure](#project-structure) · [Further reading](#further-reading)
+
 ## Run it locally
 
 Four steps: install the tools, start the stack, check it works, stop it. A first run takes a few minutes, mostly Docker building the images.
@@ -313,34 +315,50 @@ The API serves `GET /healthz` (the process is up) and `GET /readyz` (the databas
 
 ## Assumptions
 
-1. Teacher email is unique and case-insensitive, and is stored as sent. A duplicate returns 409. Re-running a test that registers the same email therefore gets 409.
-2. A successful POST returns the created resource, in the same shape as a list item.
-3. An unknown `teacherEmail` returns 400 and names the email.
-4. A teacher who is already a form teacher returns 409.
-5. A class's level and name together are not unique; only the form-teacher rule applies. See the suggestions below.
-6. Subject and level must come from the design's fixed lists; see [Rules added from the design](#rules-added-from-the-design-enforced).
-7. Contact number: 8 digits starting with 6, 8 or 9 (Singapore fixed-line and mobile numbers), in both the web form and the API. The form strips spaces first; the API trims surrounding spaces and rejects inner ones. The design's error example `9283 9999` is therefore accepted.
-8. Email uses a simple `local@domain.tld` check in both the form and the API. `teacher@gov.sg` is accepted, although the design's error example shows it as invalid.
-9. Length limits: 100 characters for a teacher name, 50 for a class name, 254 for an email.
-10. Lists are returned in insertion order, without pagination.
-11. Unknown request fields are ignored.
-12. A body with a non-JSON `Content-Type` returns 415; a POST with no body returns 400.
-13. An empty list returns `{ "data": [] }`.
-14. `error` is always one string.
-15. The Form Teacher options show names only, adding the email only when two teachers share a name. With no teachers, the dropdown shows "No existing teachers." and an "Add a teacher" link.
-16. Where the designs disagree with each other: the tab is "Teachers" (one frame says "Manage Teachers"), and the subject field is "Subject" with "Select a subject" (the component sheet says "Main Subject" with "Select a level").
-17. The Form Teacher dropdown lists every teacher, including those already assigned, because the API does not say who is assigned; the conflict appears on submit.
-18. There is no designed error state for Add Class; it follows the Add Teacher pattern.
-19. Migrations run as a separate step before the API starts. No seed data is provided.
-20. Teachers and classes can be deleted; update and reassignment are not supported (to move a class to another teacher, delete it and add it again).
-21. Names may contain any Unicode except control characters.
+Where the brief is silent, these are the choices made. They are grouped by topic; the numbers run on so that each can be referred to.
+
+### Scope
+
+1. There is no login or access control, as the brief allows. Anyone who can reach the API can create and delete teachers and classes.
+2. Teachers and classes can be deleted; update and reassignment are not supported. To move a class to another teacher, delete it and add it again.
+3. Migrations run as a separate step before the API starts. No seed data is provided.
+
+### Identity and uniqueness
+
+4. Teacher email is unique and case-insensitive, and is stored as sent. A duplicate returns 409, so re-running a test that registers the same email gets 409.
+5. A teacher who is already a form teacher cannot be given another class (409).
+6. A class's level and name together are not unique; only the form-teacher rule applies. See the suggestions below.
+7. A class is addressed by its form teacher's email, which is unique per class: `DELETE /api/classes/{teacherEmail}`. Class responses therefore include `formTeacher.email`, which the specification's example omits.
+8. A teacher who is still a form teacher cannot be deleted (409); deleting a teacher never deletes a class.
+
+### Validation
+
+9. Subject and level must come from the design's fixed lists; see [Rules added from the design](#rules-added-from-the-design-enforced).
+10. Contact number: 8 digits starting with 6, 8 or 9 (Singapore fixed-line and mobile numbers), in both the web form and the API. The form strips spaces first; the API trims surrounding spaces and rejects inner ones. The design's error example `9283 9999` is therefore accepted.
+11. Email uses a simple `local@domain.tld` check in both the form and the API. `teacher@gov.sg` is accepted, although the design's error example shows it as invalid.
+12. Length limits: 100 characters for a teacher name, 50 for a class name, 254 for an email.
+13. Names may contain any Unicode except control characters.
+14. Unknown request fields are ignored.
+
+### Responses and errors
+
+15. A successful POST returns the created resource, in the same shape as a list item.
+16. Lists are returned in insertion order, without pagination. An empty list is `{ "data": [] }`.
+17. An unknown `teacherEmail` in `POST /api/classes` returns 400 and names the email.
+18. A body with a non-JSON `Content-Type` returns 415; a POST with no body returns 400.
+19. `error` is always one string; each invalid field reports its first problem.
+20. Deleting returns `204` with no body; deleting something that does not exist returns a JSON `404`.
+21. The API stores and returns contact numbers as eight digits; the web app shows them as `6736 3939`.
 22. Rate limiting is done by nginx: 50 requests a second per address, with a burst of 200.
-23. The web app shows contact numbers as `6736 3939`; the API stores and returns eight digits.
-24. Add Class keeps a one-hour session draft. It survives the "Add a teacher" round trip and is cleared after a successful save or an explicit Back.
-25. A class is deleted through its form teacher's email, which is unique per class. Class responses therefore include `formTeacher.email`, which the specification's example omits.
-26. A teacher who is still a form teacher cannot be deleted (409); deleting a teacher never deletes a class.
-27. Deleting returns `204` with no body; deleting something that does not exist returns a JSON `404`.
-28. The web app asks for confirmation before each delete and shows the reason if the API refuses.
+
+### Web app and designs
+
+23. Where the designs disagree with each other: the tab is "Teachers" (one frame says "Manage Teachers"), and the subject field is "Subject" with "Select a subject" (the component sheet says "Main Subject" with "Select a level").
+24. The Form Teacher options show names only, adding the email only when two teachers share a name. With no teachers, the dropdown shows "No existing teachers." and an "Add a teacher" link.
+25. The Form Teacher dropdown lists every teacher, including those already assigned, because the API does not say who is assigned; the conflict appears on submit.
+26. There is no designed error state for Add Class; it follows the Add Teacher pattern.
+27. Add Class keeps a one-hour session draft. It survives the "Add a teacher" round trip and is cleared after a successful save or an explicit Back.
+28. There is no design for deleting. Each table row ends with a delete icon; the web app asks for confirmation and shows the reason if the API refuses.
 
 ## Rules added from the design (enforced)
 
@@ -362,16 +380,20 @@ Every value in the specification's examples passes. Loosening the rules is a cha
 
 ## API design suggestions
 
-- Move the subject and level lists into lookup tables, so they can change without a deploy.
-- Decide whether a class's level and name should be unique.
-- Return a `Location` header with each 201.
-- Add a stable machine-readable `code` next to `error`.
-- Show whether a teacher is already a form teacher, or offer `GET /api/teachers?available=true`, so the form can hide them.
-- Use 422 for requests that are well formed but break a business rule.
-- Add pagination with a `meta` object once lists grow.
-- Add `PATCH /api/classes/{teacherEmail}` to move a class to another form teacher in one step.
-- Give teachers and classes a stable public identifier, so neither has to be addressed by an email that could one day change.
-- Accept an `Idempotency-Key` header, so a retried POST cannot create a duplicate.
+| Suggestion                                                                                   | Why                                                                                                                                 |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Give every teacher and class a stable public `id`, and address them by it                    | Emails can change, and today a delete puts the email in the URL, so it lands in access logs                                         |
+| Identify the form teacher in the specification's class shape                                 | `formTeacher.name` alone is ambiguous, since names are not unique; this API adds `formTeacher.email` so a client can delete a class |
+| Require authentication and an admin role before real use                                     | Creating and deleting are open to anyone who can reach the API, as the brief's scope allows                                         |
+| Move the subject and level lists into lookup tables, with `GET` endpoints                    | They could change without a deploy, and the web app could load them instead of shipping a copy                                      |
+| Decide whether a class's level and name should be unique                                     | Two "Primary 1, Class 1A" are allowed today (assumption 6)                                                                          |
+| Say whether a teacher is already a form teacher, or offer `GET /api/teachers?available=true` | The Add Class form could hide teachers the API would refuse                                                                         |
+| Add `PATCH /api/classes/{teacherEmail}` to move a class to another form teacher              | One request instead of delete-and-add                                                                                               |
+| Return a `Location` header with each 201                                                     | The standard way to tell a client where the new resource lives                                                                      |
+| Add a stable machine-readable `code` next to `error`                                         | Clients could branch on codes instead of English messages; the web app matches messages today                                       |
+| Use 422 for well-formed requests that break a business rule                                  | Separates "malformed" (400) from "understood but refused"                                                                           |
+| Add pagination with a `meta` object                                                          | Lists are unbounded today                                                                                                           |
+| Accept an `Idempotency-Key` header on POST                                                   | A retried request after a timeout could not create a duplicate                                                                      |
 
 ## Architecture and security
 
